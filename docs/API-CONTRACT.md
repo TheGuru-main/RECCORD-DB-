@@ -1247,3 +1247,88 @@ must connect to real application logic.
 A button must not exist merely as visual UI.
 If an action cannot yet be connected to its real backend operation, it must not be presented as successfully completed.
 
+96. COMMERCIAL OPERATION ATOMICITY
+A purchase/activation operation must not be considered successful merely because the frontend navigated to another screen.
+The backend must establish the applicable commercial state before the frontend treats the feature as active.
+
+97. ORGANISATION PRODUCT ENTITLEMENTS
+Organisation-owned products must remain associated with the organisation even when an Admin or Worker accesses them.
+Example:
+Organisation A
+    │
+    ├── Invoice entitlement
+    ├── Invoice++ entitlement
+    └── authorised users
+          ├── Admin
+          └── Workers
+The entitlement must not be duplicated per worker merely because multiple workers use it.
+
+98. AUDITABILITY
+Commercial operations and important organisation operations must remain auditable.
+Where applicable, the backend should retain:
+initiating identity
+organisation
+product
+selected capacity
+price
+entitlement
+operation
+timestamp
+resulting state
+The exact financial/audit retention policy must be defined where not already specified.
+
+99. FRONTEND CONTRACT
+The frontend must be built against the actual backend contract.
+It must consume:
+authentication state
+user identity
+organisation state
+worker state
+roles
+countries
+languages
+pricing
+entitlements
+invoice data
+invoice configuration
+records
+commit state
+It must not recreate backend business rules independently.
+
+100. FINAL PRODUCT RULE
+RECCORD DB is being built as an actual product.
+The implementation must preserve the distinction between:
+PRODUCT
+BUSINESS RULE
+DATA
+ENTITLEMENT
+AUTHORIZATION
+UI
+A visually complete screen without its real backend behaviour is not considered complete.
+A working backend operation without the corresponding product UI is not considered complete where that UI is part of the agreed product.
+Completion means the agreed contract is implemented end-to-end.
+
+101. FINAL NON-CONTRADICTION RULE
+No future implementation may:
+change an agreed field without updating the contract
+change a pricing tier without updating the contract
+change an entitlement without updating the contract
+invent a worker workflow
+make Worker Credential necessary for Existing Worker login
+regenerate Worker Credentials when Admin changes roles
+replace organisation ownership with individual worker ownership
+replace backend persistence with mock data
+replace append with edit
+treat same-name commits as the same commit
+allow immutable objects to be edited or appended
+expose premium functionality without the applicable entitlement
+claim an operation succeeded without backend confirmation
+Any required change must first be made explicitly to the contract.
+
+102. GOVERNING IMPLEMENTATION PRINCIPLE
+RECCORD DB must be built as the actual product.
+The objective is not to create a demonstration that looks functional.
+The objective is:
+REAL CONTRACT ↓ REAL DATABASE ↓ REAL BACKEND ↓ REAL API ↓ REAL FRONTEND ↓ REAL DEPLOYMENT
+Production behaviour must reflect the agreed RECCORD DB rules.
+No mock system may be substituted for the actual system.
