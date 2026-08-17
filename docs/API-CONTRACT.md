@@ -529,4 +529,179 @@ The exact financial/accounting relationship must be defined before implementatio
 The implementation must not invent accounting semantics.
 
 
+38. COMMERCIAL DATA INTEGRITY
+Invoices, receipts, billing records, subscriptions, and entitlements are persistent backend data.
+They must not be stored only in browser storage.
+They must not be generated from mock data in production.
+39. API RESOURCE PRINCIPLE
+Every persistent domain object must have a backend representation.
+The API must be organized around domain resources rather than frontend screens.
+Primary resource domains include:
+/auth
+/users
+/organisations
+/workers
+/roles
+/records
+/commits
+/receipts
+/invoices
+/billing
+/subscriptions
+/entitlements
+/settings
+These are resource domains, not permission to invent undocumented endpoint names.
+The final endpoint paths and request/response schemas must be documented before implementation.
+40. REQUEST VALIDATION
+Every write endpoint must validate its request on the backend.
+Validation includes, where applicable:
+required fields
+field type
+field format
+account type
+authentication state
+authorization
+organisation membership
+worker state
+role validity
+commit behaviour
+commercial entitlement
+Invalid requests must be rejected.
+41. RESPONSE CONTRACT
+Successful API responses must have predictable structures.
+The API must distinguish:
+success
+validation failure
+authentication failure
+authorization failure
+not found
+conflict
+business-rule violation
+server failure
+The frontend must consume these responses rather than infer backend state from button behaviour.
+
+
+42. DATABASE AUTHORITY
+The database is the persistent source of truth.
+The backend is the business-rule authority.
+The frontend is the presentation/client layer.
+The architecture is therefore:
+USER
+ ↓
+FRONTEND
+ ↓
+API
+ ↓
+BACKEND BUSINESS LOGIC
+ ↓
+DATABASE
+
+
+43. NO FRONTEND DATABASE
+The frontend must not use:
+localStorage
+sessionStorage
+hard-coded objects
+mock arrays
+fake users
+fake organisations
+fake invoices
+fake receipts
+as substitutes for backend persistence.
+A client-side cache may only exist as an optimization after the authoritative backend implementation exists and must never become the source of truth.
+
+
+44. NO SILENT FALLBACK
+If the backend is unavailable, the frontend must not silently pretend that an operation succeeded.
+For example:
+Register
+must not display successful registration unless the backend has actually accepted the registration.
+The same rule applies to:
+login
+worker approval
+role creation
+record creation
+commit
+append
+edit
+invoice creation
+receipt creation
+payment
+premium activation
+
+
+45. SECURITY
+Authentication credentials must never be stored in plaintext.
+Passwords must be securely hashed by the backend.
+Sensitive credentials must not be exposed in API responses.
+Worker Credentials must be treated as sensitive organisation registration credentials.
+The backend must validate and authorize every protected operation.
+
+
+46. AUTHORIZATION
+Authorization must be enforced server-side.
+At minimum, authorization decisions must distinguish:
+REGULAR USER
+ADMIN
+WORKER
+and must additionally account for:
+organisation membership
+ownership
+worker approval
+role
+rank
+resource permissions
+premium entitlement
+
+
+47. ADMIN-ONLY ORGANISATION CONTROL
+The following are organisation-controlled operations:
+worker approval
+worker rejection
+worker role management
+worker rank management
+organisation role management
+other explicitly Admin-controlled organisation settings
+Workers must not gain these permissions merely by possessing a valid Worker Credential.
+
+
+48. WORKER CREDENTIAL SECURITY
+The Worker Credential identifies the organisation for first-time worker registration.
+Possession of the credential does not equal:
+worker approval
+organisation administration
+role administration
+rank administration
+The backend must never treat the credential as an Admin credential.
+
+
+49. COUNTRY AND LANGUAGE DATA
+Country and language datasets are backend/application data.
+They must be versionable.
+The country dataset must support the information required for:
+country selection
+calling code
+phone validation/matching context
+The language dataset must support the application's supported languages.
+The frontend consumes these datasets.
+
+
+50. VERSIONING
+The application and API must have explicit versions.
+The Version displayed in Settings must correspond to an actual application version.
+The backend API must be versionable without silently breaking existing clients.
+
+
+51. DEPLOYMENT TARGET
+The intended production architecture is:
+GitHub
+   ↓
+Source control
+   ↓
+Vercel
+   ↓
+RECCORD DB deployment
+Frontend and backend deployment architecture must be compatible with Vercel.
+Environment secrets must not be committed to GitHub.
+
 
