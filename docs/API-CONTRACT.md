@@ -767,3 +767,60 @@ They must never be presented as production application behaviour.
 They must never become the production persistence layer.
 They must never silently replace a real backend operation.
 
+# RECCORD DB — API / PRODUCT CONTRACT
+## CONTINUATION — COMMERCIAL, PREMIUM, INVOICE & PRODUCT UI
+
+**Status:** Authoritative continuation  
+**Rule:** This section is additive to Sections 1–58.  
+**No earlier contract rule is revoked unless this section explicitly supersedes it.**
+
+---
+
+# 59. PRODUCT SURFACES
+
+RECCORD DB is not limited to authentication and records.
+
+The production product includes:
+
+- Regular User home
+- Worker home
+- Admin dashboard
+- Settings
+- Records and commits
+- Invoice
+- Invoice++
+- Premium activation
+- Premium feature access
+- Receipts
+- Invoices
+- Billing
+- Entitlements
+- Internal application setup
+- About
+- Version
+- Badge
+- Organisation management
+
+These are real product surfaces.
+
+They must not be implemented as static demonstrations.
+
+---
+
+# 60. PREMIUM ACTIVATION
+
+Premium functionality is activated through a real backend entitlement.
+
+Before the applicable premium entitlement is active, a premium-only feature must present its upgrade path.
+
+The frontend must not pretend that the premium feature is available.
+
+The general pre-activation state is:
+
+```text
+Premium feature
+      ↓
+Upgrade to Premium
+
+
+
