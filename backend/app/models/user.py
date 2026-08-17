@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class User(Base):
-    """Individual user identity within RECCORD DB."""
+    """RECCORD DB account for a regular user, Admin, or Worker."""
 
     __tablename__ = "users"
 
@@ -26,14 +26,14 @@ class User(Base):
         nullable=False,
     )
 
-    phone: Mapped[str] = mapped_column(
-        String(32),
-        nullable=False,
-    )
-
     password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+    )
+
+    phone: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
     )
 
     account_type: Mapped[str] = mapped_column(
