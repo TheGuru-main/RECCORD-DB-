@@ -1,4 +1,4 @@
-"""RECCORD DB Admin/organisation model."""
+"""RECCORD DB organisation model."""
 
 import uuid
 from datetime import datetime
@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class Organisation(Base):
-    """Organisation record owned by one Admin account."""
+    """Organisation belonging to one Admin account."""
 
     __tablename__ = "organisations"
 
