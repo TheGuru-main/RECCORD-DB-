@@ -1,4 +1,4 @@
-"""RECCORD DB organisation/Admin model."""
+"""RECCORD DB Admin/organisation model."""
 
 import uuid
 from datetime import datetime
@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class Organisation(Base):
-    """Admin-owned organisation account."""
+    """Organisation record owned by one Admin account."""
 
     __tablename__ = "organisations"
 
@@ -56,6 +56,11 @@ class Organisation(Base):
     organisation_uid: Mapped[str] = mapped_column(
         String(255),
         unique=True,
+        nullable=False,
+    )
+
+    worker_id: Mapped[str] = mapped_column(
+        String(64),
         nullable=False,
     )
 
