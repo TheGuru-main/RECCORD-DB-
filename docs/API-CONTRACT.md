@@ -1332,3 +1332,30 @@ The objective is:
 REAL CONTRACT ↓ REAL DATABASE ↓ REAL BACKEND ↓ REAL API ↓ REAL FRONTEND ↓ REAL DEPLOYMENT
 Production behaviour must reflect the agreed RECCORD DB rules.
 No mock system may be substituted for the actual system.
+
+Worker termination and deletion
+When an Admin sacks/terminates a Worker or the Worker stops working for the organisation, the Admin must be able to remove that Worker from the organisation.
+The important distinction is:
+Remove worker from organisation ≠ destroy historical RECCORD data.
+The worker's organisation membership and active access are revoked, while their historical commits/records remain governed by the existing APPEND / MUTABLE / IMMUTABLE / AUTO rules and audit requirements.
+The lifecycle should therefore be:
+ACTIVE WORKER
+     ↓
+Admin terminates / removes worker
+     ↓
+ORGANISATION MEMBERSHIP REVOKED
+     ↓
+Worker can no longer access organisation
+     ↓
+Worker can no longer perform new organisation operations
+Admin controls
+The Admin should have a worker-management action for:
+Remove / Sack Worker
+confirmation before execution
+immediate organisation-access revocation
+worker no longer appearing as an active organisation member
+The system should retain the necessary historical association for auditability rather than silently rewriting history.
+Rejoining
+If the person later returns to the organisation, they should go through the appropriate New Worker registration process again using the organisation's existing Worker Credential. The Admin does not need to generate a new credential merely because one worker left.
+
+Admin may terminate/remove a Worker from the organisation. Termination revokes the Worker’s active organisation membership and access. It does not automatically delete historical commits, records, audit history, or other immutable application data associated with that Worker. Historical data remains governed by its existing commit rules. The organisation Worker Credential remains valid for future authorised worker registrations unless the Admin explicitly changes/revokes the credential under the organisation credential-management rules.
