@@ -704,4 +704,66 @@ RECCORD DB deployment
 Frontend and backend deployment architecture must be compatible with Vercel.
 Environment secrets must not be committed to GitHub.
 
+52. ENVIRONMENT CONFIGURATION
+Environment-specific values must be supplied through deployment environment configuration.
+Secrets must never be hard-coded into:
+HTML
+frontend JavaScript
+public configuration
+GitHub source files
+
+
+53. TESTING REQUIREMENT
+Backend tests must be written against the API contract.
+Critical business rules must have tests before frontend integration.
+Tests must cover at minimum:
+all three account entry points
+worker New registration
+worker Existing login
+Worker Credential organisation matching
+organisation role retrieval
+Admin role updates without credential regeneration
+worker approval
+worker rejection
+phone identity matching
+country/calling-code behaviour
+append-only
+mutable
+immutable
+auto
+same-name separate commits
+premium entitlement
+invoice behaviour
+receipt behaviour
+authorization boundaries
+
+
+54. CONTRACT-FIRST IMPLEMENTATION
+Implementation order is mandatory:
+API CONTRACT
+      ↓
+DATABASE MODEL
+      ↓
+BACKEND
+      ↓
+BACKEND TESTS
+      ↓
+FRONTEND
+      ↓
+INTEGRATION TESTS
+      ↓
+DEPLOYMENT
+Frontend implementation must not precede the backend contract.
+
+55. CONTRACT INTEGRITY RULE
+No implementation may silently change a product rule contained in this contract.
+If implementation reveals an ambiguity, the ambiguity must be raised and resolved explicitly.
+It must not be resolved by assumption.
+If a future product decision changes a rule, the contract must be updated first and the implementation must then follow the updated contract.
+
+56. PROTOTYPE / TEST FIXTURE RULE
+Temporary development fixtures may exist only in explicitly isolated test tooling.
+They must never be presented as production application behaviour.
+They must never become the production persistence layer.
+They must never silently replace a real backend operation.
 
