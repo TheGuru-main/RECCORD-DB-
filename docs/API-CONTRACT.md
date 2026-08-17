@@ -337,3 +337,89 @@ Name: Employment Record
 
 Commit B
 Name: Employment Record
+
+These are separate commits.
+Same name does not mean append.
+19. COMMIT BEHAVIOUR TYPES
+Every applicable record/commit must have one of the following behaviour types:
+APPEND
+MUTABLE
+IMMUTABLE
+AUTO
+These behaviours are system rules and must be enforced by the backend.
+20. APPEND-ONLY
+APPEND means the existing committed content cannot be edited in place.
+New information is added as a new append.
+The append appears at the bottom of the applicable record/commit history.
+The original committed content remains unchanged.
+Example:
+Original commit
+
+Name: John Doe
+Role: Engineer
+An append produces:
+Original commit
+
+Name: John Doe
+Role: Engineer
+
+Append
+
+Role changed to Senior Engineer.
+The original content remains intact.
+21. INLINE APPEND / COMMENT
+An inline append is not an in-place edit.
+If a user wants to address a specific piece of text within an existing commit, they may reference the exact text they are addressing and provide their appended statement/comment.
+Example:
+Existing text:
+
+The delivery occurred on Monday.
+The user may append:
+[Referenced text]
+"The delivery occurred on Monday."
+
+[Append]
+The delivery actually occurred on Tuesday according to the attached record.
+The referenced text identifies what the user is addressing.
+The original text is not modified.
+The append is still a new addition to the record history.
+If the user does not need to reference a particular section, the user may append directly at the bottom.
+22. APPEND TO MUTABLE
+For a MUTABLE commit, an append is treated as a new commit.
+It is not a special mutation of the existing commit.
+Therefore:
+MUTABLE commit
+        +
+append
+        ↓
+NEW COMMIT
+The previous commit remains part of the record history.
+23. MUTABLE
+MUTABLE means the committed object may be edited.
+The latest valid version is stored as the current state while the backend maintains the required record/history information.
+A mutable object may be changed according to its permissions.
+However:
+An append to a mutable commit is a new commit.
+Append behaviour must not be silently converted into an edit.
+24. IMMUTABLE
+IMMUTABLE means the object cannot be edited.
+It also cannot be appended to.
+Once committed:
+IMMUTABLE
+    ↓
+NO EDIT
+NO APPEND
+Any attempted mutation must be rejected by the backend.
+25. AUTO
+AUTO means the system determines the applicable behaviour using RECCORD DB system logic.
+AUTO is not a permission for the frontend to decide behaviour.
+The backend determines the applicable rule.
+The system's default integrity behaviour is append-only.
+Therefore, where AUTO resolves to append-only behaviour:
+existing content
+       ↓
+preserve original
+       ↓
+new append
+No frontend implementation may override AUTO behaviour.
+
