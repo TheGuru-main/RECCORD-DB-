@@ -206,6 +206,7 @@ If a contact already stores:
 +2348012345678
 it must match directly.
 The future contact/messaging integration may use this matching layer to recognize RECCORD identities.
+
 8. COUNTRY → PHONE CASCADE
 Country selection occurs before phone-number entry.
 The country selection determines the phone-number calling-code context.
@@ -220,16 +221,19 @@ Full international phone identity
 The backend/data layer supplies the supported countries and calling codes.
 The frontend must not contain an incomplete manually maintained country list.
 The selected country must be retained as part of the registration data where required by the data model.
+
 9. LANGUAGE
 Language options are data-driven.
 The language dropdown must be populated from the application's supported language data.
 The frontend must not display an empty dropdown or rely on a single hard-coded language as a substitute for the application language dataset.
+
 10. REGISTRATION DATA
 The registration contract must distinguish the fields belonging to each account path.
 Fields must not be duplicated merely because another account type happens to use a similar value.
 The backend validates each account type according to its own registration contract.
 The frontend must submit exactly the fields required by that account type.
 No unrequested registration field may be invented.
+
 11. AUTHENTICATION
 Authentication is backend controlled.
 The backend provides:
@@ -243,3 +247,73 @@ account status
 worker approval state
 The frontend must not authenticate users locally.
 The frontend must not fabricate authentication responses.
+
+12. WORKER APPROVAL
+New Worker registration creates a pending worker.
+The initial worker state is:
+PENDING
+Admin may:
+PENDING → APPROVED
+PENDING → REJECTED
+Only an approved worker receives normal organisation access.
+Worker approval is controlled by the backend.
+The frontend cannot bypass approval.
+
+13. ADMIN CONTROL
+Admin is the authority for organisation-controlled worker configuration.
+Admin controls:
+organisation roles
+worker role assignment
+worker rank
+worker approval
+permitted organisation settings
+Workers cannot modify these Admin-controlled values.
+
+14. SETTINGS
+The settings system includes:
+About
+Version
+Badge
+Badge types include:
+Regular User
+Admin
+Worker
+Worker badge includes the Admin-controlled four-rank system.
+Settings permissions depend on account type.
+Regular Users and Admins may modify settings available to their account.
+Workers cannot independently modify Admin-controlled organisation settings.
+
+15. API AUTHORITY
+All business rules are enforced by the backend.
+The frontend must not be trusted for:
+account permissions
+organisation ownership
+worker approval
+role ownership
+rank assignment
+record integrity
+invoice state
+payment state
+premium entitlement
+append/mutation rules
+Every protected API endpoint must authenticate and authorize the request.
+
+16. ERROR CONTRACT
+Backend errors must be structured.
+Errors must identify:
+error code
+human-readable message
+relevant validation information where applicable
+The frontend must render backend errors rather than guessing what happened.
+17. NO MOCK DATA
+The production architecture must not depend on:
+mock authentication
+mock users
+mock organisations
+mock workers
+mock invoices
+mock receipts
+fake OTPs
+localStorage as a database
+frontend-generated persistent IDs
+Temporary development fixtures may exist only in explicitly isolated test tooling and must never be presented as production application behaviour.
