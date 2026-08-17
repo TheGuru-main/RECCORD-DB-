@@ -11,7 +11,14 @@ from app.core.database import Base
 
 
 class User(Base):
-    """RECCORD DB account for a regular user, Admin, or Worker."""
+    """
+    RECCORD DB account.
+
+    One application supports three signup phases:
+    - regular user signup
+    - admin/organisation signup
+    - worker registration
+    """
 
     __tablename__ = "users"
 
