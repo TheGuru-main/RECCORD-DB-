@@ -423,3 +423,110 @@ preserve original
 new append
 No frontend implementation may override AUTO behaviour.
 
+26. COMMIT PERMISSIONS
+The backend must verify that the requesting account is permitted to perform the requested operation.
+The backend must evaluate:
+authenticated identity
+account type
+organisation membership where applicable
+ownership
+record permissions
+commit behaviour
+current record state
+The frontend's button visibility is not an authorization mechanism.
+
+27. RECORD HISTORY
+Where a record supports history, the backend must preserve the relationship between:
+original commit
+subsequent mutable versions where applicable
+appended commits
+inline references
+author identity
+timestamps
+applicable behaviour type
+History must not be reconstructed from frontend state.
+
+
+28. AUTHOR IDENTITY
+A committed record must identify its author using the authenticated RECCORD DB identity.
+The backend must not trust an author ID supplied by an unauthenticated or unauthorized client.
+The authenticated session determines the author.
+Phone identity/uID remains the authoritative user identity as defined in Split 1.
+
+
+29. TIMESTAMPS
+Server-side timestamps are authoritative for persistent records.
+The client may display timestamps according to locale/timezone requirements, but must not be able to falsify the authoritative creation/commit time.
+
+
+30. RECEIPTS
+RECCORD DB includes a receipt system.
+Receipts are a first-class backend resource.
+Receipt functionality is not a frontend-only document generator.
+Receipts must be persistable and retrievable through the API.
+Receipt records must have a defined ownership/authorization relationship.
+Receipt data must remain associated with its originating account or organisation according to the applicable product context.
+
+
+31. FREE RECEIPTS
+Receipt functionality is free and unlimited.
+The backend must not impose a premium usage quota on the agreed free receipt functionality.
+The frontend must not display a false premium restriction for free receipts.
+
+
+32. INVOICES
+RECCORD DB includes an invoice system.
+Invoices are first-class backend resources.
+Invoice records must be persistable, retrievable, and associated with their applicable account/organisation.
+Invoice state must be controlled by the backend.
+The frontend must not fabricate invoice status.
+33. PREMIUM
+RECCORD DB includes premium functionality.
+Premium is an entitlement system, not merely a frontend visual switch.
+The backend must determine:
+whether an account has premium
+which premium tier applies
+which features are entitled
+whether an entitlement is active
+applicable subscription/billing state
+The frontend consumes the entitlement state returned by the backend.
+
+
+34. INVOICE++
+RECCORD DB includes Invoice++ as a distinct premium product/functionality layer.
+Invoice++ must not be silently treated as ordinary invoice functionality.
+Its exact feature set, pricing rules, limits, and entitlements must be represented explicitly in the commercial contract when those product definitions are finalized.
+The backend must remain the authority for Invoice++ entitlement.
+35. BILLING
+Billing is a backend concern.
+The backend must maintain the relationship between:
+Account / Organisation
+        ↓
+Subscription / Entitlement
+        ↓
+Premium product
+        ↓
+Feature access
+The frontend must not determine whether a user has paid.
+Payment-provider integration details must be isolated behind the backend billing layer.
+
+
+36. ENTITLEMENTS
+Premium feature access must be determined by backend entitlements.
+An entitlement may depend on:
+account
+organisation
+product
+subscription
+billing status
+applicable plan
+The frontend may display an entitlement but cannot grant itself the entitlement.
+
+
+37. INVOICE / RECEIPT RELATIONSHIP
+Where a transaction produces an invoice or receipt, the backend must maintain the appropriate relationship between the commercial records.
+The exact financial/accounting relationship must be defined before implementation where it has not already been specified.
+The implementation must not invent accounting semantics.
+
+
+
