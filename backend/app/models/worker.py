@@ -34,11 +34,6 @@ class Worker(Base):
         nullable=False,
     )
 
-    worker_id: Mapped[str] = mapped_column(
-        String(64),
-        nullable=False,
-    )
-
     role_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("roles.id", ondelete="RESTRICT"),
