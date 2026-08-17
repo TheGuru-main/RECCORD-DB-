@@ -822,5 +822,210 @@ Premium feature
       ↓
 Upgrade to Premium
 
+After successful activation:
+Premium entitlement
+      ↓
+Feature becomes available
+The backend is authoritative for activation.
+61. PREMIUM CAPTURE FEATURES
+Premium access includes:
+Image Commit
+Voice Commit
+Phone image capture
+Gallery access for image commits
+Voice capture for voice commits
+The capture functionality becomes available only after the applicable premium entitlement is active.
+62. IMAGE COMMIT
+Image Commit allows an entitled user to:
+capture an image using the phone
+select/access an image from the device gallery
+commit the image into RECCORD DB
+The resulting image commit is subject to the applicable RECCORD DB commit behaviour:
+APPEND
+MUTABLE
+IMMUTABLE
+AUTO
+The image itself is real persisted application data.
+63. VOICE COMMIT
+Voice Commit allows an entitled user to:
+capture voice/audio from the phone
+commit the resulting recording into RECCORD DB
+Voice commits are subject to the same applicable commit integrity rules.
+64. FULL FOLDER → CLOUD
+Full Folder Commit to Cloud is a separate premium capability.
+Price: ₦20,000/year.
+After activation, the entitled account may access folders in device/phone memory for cloud committing.
+The system must support:
+multiple folders
+folders of different sizes
+multiple commits
+commits originating from different folders
+The entitlement controls access to this cloud-folder functionality.
+65. PDF COMMIT
+PDF Commit is an early-access paid capability.
+Price: ₦15,000 lifetime.
+Once the entitlement is active, the user may commit supported PDF files into RECCORD DB.
+The entitlement is lifetime rather than monthly.
+66. ZIP COMMIT
+ZIP Commit is included in the same early-access entitlement:
+Price: ₦15,000 lifetime.
+The entitlement provides access to ZIP committing.
+PDF Commit and ZIP Commit must not be confused with ordinary text/record commits.
+67. INVOICE PRODUCT
+Invoice is a first-class RECCORD DB product.
+It has:
+its own screen
+its own activation state
+its own pricing
+its own checkout calculation
+its own invoice data
+its own editor
+its own entitlement
+Invoice is distinct from Invoice++.
+68. FINAL INVOICE PRICING
+The following pricing is authoritative.
+Capacity
+Price
+300
+₦3,000
+500
+₦5,000
+1,000
+₦12,000
+1,500
+₦15,000
+2,000
+₦18,000
+2,500
+₦20,500
+4,000
+₦25,000
+These prices supersede all earlier Invoice pricing.
+No earlier Invoice pricing may be implemented.
+69. INVOICE++ PRODUCT
+Invoice++ is a distinct product from Invoice.
+Invoice++ has its own capacity tiers and pricing.
+70. FINAL INVOICE++ PRICING
+The following pricing is authoritative.
+Starter
+Capacity
+Price
+400
+₦4,000
+700
+₦8,000
+Business
+Capacity
+Price
+1,000
+₦15,000
+1,500
+₦20,000
+Enterprise
+Capacity
+Price
+2,500
+₦25,000
+3,000
+₦27,000
+5,000
+₦30,000
+These prices supersede all earlier Invoice++ pricing.
+No earlier Invoice++ pricing may be implemented.
+71. INVOICE ACTIVATION
+Invoice functionality becomes available on the applicable Owner's screen after successful activation.
+The activation must be backed by a real entitlement.
+Before activation:
+Invoice
+    ↓
+Upgrade / activate
+After activation:
+Invoice entitlement
+    ↓
+Invoice screen available
+The frontend must obtain activation/entitlement state from the backend.
+
+72. ORGANISATION INVOICE OWNERSHIP
+When an organisation activates Invoice, the Invoice entitlement belongs to the organisation.
+The Admin is the organisation Owner/billing authority.
+The entitlement is therefore not treated as an Admin's private personal subscription.
+Organisation
+      │
+      └── Invoice entitlement
+              │
+              ├── Admin
+              └── authorised Workers
+
+73. WORKER ACCESS TO ORGANISATION INVOICE
+Where Invoice belongs to an organisation, authorised workers belonging to that organisation may access the organisation's Invoice functionality.
+A worker does not need to purchase a separate Invoice entitlement merely because they are using an Invoice entitlement already owned by their organisation.
+Worker access remains subject to:
+authentication
+organisation membership
+worker approval
+worker permissions
+The worker does not become the owner of the organisation's Invoice entitlement.
+
+74. INVOICE BILLING AUTHORITY
+For an organisation Invoice entitlement:
+Entitlement owner:
+Organisation
+
+Billing authority:
+Admin / Owner
+
+Users:
+Admin + authorised Workers
+The backend must preserve this distinction.
+
+75. INVOICE++ ORGANISATION ACCESS
+Invoice++ follows the same ownership principle when purchased by an organisation.
+The organisation owns the entitlement.
+The Admin controls the commercial relationship.
+Authorised workers may use the organisation's Invoice++ functionality according to permissions.
+A worker's use does not transfer ownership of the entitlement.
+
+76. INVOICE EDITOR
+The Invoice editor uses the RECCORD DB gradient background stack as its visual colour foundation.
+A separate arbitrary invoice colour system must not be introduced.
+The editor provides the following defined tools.
+List / marker tools
+•
+○
+■
+★
+✓
+→
+—
+These represent the defined list/marking options.
+The editor also supports:
+numbered lists
+checklists
+
+77. INVOICE STRUCTURE TOOLS
+The Invoice editor supports:
+Quote block
+Divider
+H1
+H2
+H3
+Tables
+No additional heading levels are required by this contract.
+
+78. INVOICE TEXT FORMATTING
+The Invoice editor supports:
+Bold
+Underline
+Strikethrough
+Italicize
+Strikethrough is specifically available for signature-related presentation/use.
+
+79. INVOICE ALIGNMENT TOOLS
+The Invoice editor includes the defined Invoice alignment tools.
+Center alignment is included.
+Tab is included.
+No additional formatting controls are to be invented merely because a generic rich-text editor normally provides them.
+The Invoice toolbar is intentionally limited to the defined tools.
+
 
 
