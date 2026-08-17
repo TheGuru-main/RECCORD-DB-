@@ -1027,5 +1027,223 @@ Tab is included.
 No additional formatting controls are to be invented merely because a generic rich-text editor normally provides them.
 The Invoice toolbar is intentionally limited to the defined tools.
 
+80. INVOICE CALCULATOR
+Invoice includes the normal checkout calculator.
+The normal calculator is used for selecting/calculating the applicable Invoice capacity and price.
+The calculator must use the authoritative Invoice pricing table in §68.
+The calculator must not contain hard-coded prices that differ from the backend pricing source.
+The final checkout amount must be determined from the actual selected product/capacity.
 
+
+81. PREMIUM CALCULATOR
+Premium product selection includes a separate premium calculator.
+The Premium calculator must not be treated as the ordinary Invoice calculator.
+Where the selected product is Invoice++, the calculator must use the Invoice++ pricing table in §70.
+The UI must clearly distinguish:
+Invoice
+from:
+Invoice++
+
+
+82. PRICING SOURCE OF TRUTH
+Commercial pricing must have one authoritative backend representation.
+Frontend pricing is presentation data derived from the backend/product configuration.
+The frontend must not silently override backend pricing.
+If a price changes:
+product configuration/contract is updated
+backend pricing is updated
+tests are updated
+frontend consumes the updated pricing
+
+
+83. PREMIUM ENTITLEMENT SCOPE
+Premium features must have an explicit entitlement scope.
+Possible scopes include:
+individual account
+organisation
+The implementation must not assume that every premium feature has identical sharing behaviour.
+Where the contract explicitly defines organisation sharing, such as Invoice and Invoice++, the organisation entitlement is shared with authorised organisation workers.
+
+
+84. PREMIUM UI STATE
+The frontend must distinguish at minimum:
+LOCKED / UPGRADE
+ACTIVE
+UNAVAILABLE
+A locked premium feature displays the upgrade path.
+An active entitlement displays the actual feature.
+The frontend must obtain this state from the backend.
+
+
+85. PREMIUM FEATURE SECURITY
+Opening a premium screen or manipulating frontend state must not grant access.
+The backend must independently verify entitlement before allowing premium operations.
+This applies to:
+Image Commit
+Voice Commit
+Gallery Commit
+Folder → Cloud
+PDF Commit
+ZIP Commit
+Invoice
+Invoice++
+
+
+86. ADMIN DASHBOARD
+The Admin dashboard is a real application surface.
+It must provide the Admin with the organisation controls established by the contract, including:
+organisation management
+worker management
+pending worker registrations
+worker approval/rejection
+role management
+worker role assignment
+worker rank management
+organisation settings
+organisation-level product/entitlement visibility where permitted
+Admin role management must not regenerate the Worker Credential merely because roles change.
+
+87. DYNAMIC WORKER ROLES
+The Worker registration role dropdown is organisation-specific.
+The sequence is:
+Worker Credential
+       ↓
+Backend identifies organisation
+       ↓
+Backend returns current organisation roles
+       ↓
+Worker selects role
+       ↓
+Worker submits registration
+       ↓
+Pending Admin approval
+The frontend must not maintain a universal hard-coded worker-role list.
+If Admin creates a new role, that role becomes available to subsequent New Worker registrations after the backend update.
+No new Worker Credential is required.
+
+88. WORKER REGISTRATION STATE
+New Worker registration requires the organisation Worker Credential.
+The credential identifies the organisation for the initial registration.
+The worker then receives the current organisation roles and selects their role.
+The worker submits their details and remains pending.
+
+
+89. EXISTING WORKER LOGIN
+Existing Worker login does not use the Worker Credential.
+Existing Worker authentication uses:
+phone number
+username
+password
+The worker remains associated with the organisation established during initial registration.
+The Worker Credential is not required for every login.
+
+
+90. SETTINGS
+Settings include:
+About
+Version
+Badge
+Badge categories include:
+Regular User
+Admin
+Worker
+Worker badges incorporate the four Admin-controlled ranks.
+Settings permissions follow account type and organisation permissions.
+
+
+91. HOME EXPERIENCES
+RECCORD DB has distinct application experiences for:
+Regular User
+Worker
+Admin
+The home experience must reflect the authenticated account and its permissions.
+The frontend must not expose Admin-only controls to workers merely because those controls exist in the HTML.
+Backend authorization remains authoritative.
+
+
+92. INTERNAL SETUP
+Internal application setup includes the backend-controlled configuration required to operate:
+countries
+calling codes
+languages
+roles
+worker ranks
+permissions
+product pricing
+premium entitlements
+Invoice configuration
+Invoice++ configuration
+application version
+product availability
+Internal setup must be represented as real application configuration/data.
+It must not be replaced with scattered frontend constants where backend authority is required.
+93. PRODUCT PRICING INTEGRITY
+The following are now locked:
+Invoice
+300    → ₦3,000
+500    → ₦5,000
+1,000  → ₦12,000
+1,500  → ₦15,000
+2,000  → ₦18,000
+2,500  → ₦20,500
+4,000  → ₦25,000
+Invoice++
+Starter:
+400    → ₦4,000
+700    → ₦8,000
+
+Business:
+1,000  → ₦15,000
+1,500  → ₦20,000
+
+Enterprise:
+2,500  → ₦25,000
+3,000  → ₦27,000
+5,000  → ₦30,000
+These values are authoritative.
+
+
+94. IMPLEMENTATION ORDER FOR COMMERCIAL FEATURES
+Commercial functionality must follow:
+Product definition
+      ↓
+Pricing configuration
+      ↓
+Database model
+      ↓
+Entitlement model
+      ↓
+Backend API
+      ↓
+Backend tests
+      ↓
+Calculator
+      ↓
+Checkout
+      ↓
+Activation
+      ↓
+Product screen
+      ↓
+Integration tests
+
+95. NO STATIC COMMERCIAL BUTTONS
+Buttons such as:
+Upgrade
+Activate
+Subscribe
+Checkout
+Buy
+Generate Invoice
+Create Invoice
+Invoice++
+Commit
+Capture Image
+Capture Voice
+Upload Folder
+Commit PDF
+Commit ZIP
+must connect to real application logic.
+A button must not exist merely as visual UI.
+If an action cannot yet be connected to its real backend operation, it must not be presented as successfully completed.
 
