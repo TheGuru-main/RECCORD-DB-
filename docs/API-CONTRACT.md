@@ -305,6 +305,7 @@ error code
 human-readable message
 relevant validation information where applicable
 The frontend must render backend errors rather than guessing what happened.
+
 17. NO MOCK DATA
 The production architecture must not depend on:
 mock authentication
@@ -317,3 +318,22 @@ fake OTPs
 localStorage as a database
 frontend-generated persistent IDs
 Temporary development fixtures may exist only in explicitly isolated test tooling and must never be presented as production application behaviour.
+
+# 18. RECORDS AND COMMITS
+
+RECCORD DB stores information as records and commits.
+
+A commit represents a distinct committed submission/change in the RECCORD DB record system.
+
+A commit is not identified as an append merely because another commit has the same name.
+
+Two commits with the same name are two separate commits unless an explicit append operation is being performed.
+
+Example:
+
+```text
+Commit A
+Name: Employment Record
+
+Commit B
+Name: Employment Record
