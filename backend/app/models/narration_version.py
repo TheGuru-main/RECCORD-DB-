@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class NarrationVersion(Base):
-    """Immutable version of a narration."""
+    """Immutable version history for a narration."""
 
     __tablename__ = "narration_versions"
 
