@@ -3,15 +3,15 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
 
-class Object(Base):
-    """Object belonging to an Admin organisation."""
+class ObjectRecord(Base):
+    """Object committed by a regular user or within an organisation."""
 
     __tablename__ = "objects"
 
@@ -21,10 +21,16 @@ class Object(Base):
         default=uuid.uuid4,
     )
 
-    organisation_id: Mapped[uuid.UUID] = mapped_column(
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("organisations.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
+    )
+
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=True,
     )
 
     name: Mapped[str] = mapped_column(
@@ -32,14 +38,10 @@ class Object(Base):
         nullable=False,
     )
 
-    description: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
     status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
+        default="active",
     )
 
     created_at: Mapped[datetime] = mapped_column(
