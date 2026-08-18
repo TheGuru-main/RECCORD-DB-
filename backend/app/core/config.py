@@ -6,10 +6,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
+    """Application and environment settings."""
 
     app_name: str = "RECCORD DB"
+    app_version: str = "1.0.0"
     environment: str = "development"
+    debug: bool = False
 
     database_url: str
 
@@ -27,6 +29,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Return the cached application settings."""
     return Settings()
 
 
