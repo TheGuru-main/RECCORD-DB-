@@ -11,7 +11,13 @@ from app.core.database import Base
 
 
 class Worker(Base):
-    """Worker user belonging to an Admin organisation."""
+    """Worker account belonging to an organisation.
+
+    Workers do not own placement or a Worker ID.
+
+    The organisation owns one shared Worker ID and one worker-registration
+    credential context for all workers belonging to that organisation.
+    """
 
     __tablename__ = "workers"
 
@@ -34,20 +40,15 @@ class Worker(Base):
         nullable=False,
     )
 
-    role_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("roles.id", ondelete="RESTRICT"),
-        nullable=True,
-    )
-
-    approval_status: Mapped[str] = mapped_column(
-        String(32),
+    role: Mapped[str] = mapped_column(
+        String(128),
         nullable=False,
     )
 
     status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
+        default="active",
     )
 
     created_at: Mapped[datetime] = mapped_column(
