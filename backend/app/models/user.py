@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,13 +11,13 @@ from app.core.database import Base
 
 
 class User(Base):
-    """
-    RECCORD DB account.
+    """Application user.
 
-    One application supports three signup phases:
-    - regular user signup
-    - admin/organisation signup
-    - worker registration
+    A user is either:
+    - a regular user with an independent account context, or
+    - a worker belonging to an organisation.
+
+    The Admin is represented by the organisation account itself.
     """
 
     __tablename__ = "users"
@@ -31,9 +31,15 @@ class User(Base):
     username: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+        unique=True,
     )
 
     password_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
     )
@@ -48,15 +54,16 @@ class User(Base):
         nullable=False,
     )
 
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+
     status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
-    )
-
-    phone_verified: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False,
+        default="active",
     )
 
     created_at: Mapped[datetime] = mapped_column(
