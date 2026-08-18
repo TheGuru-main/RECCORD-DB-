@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class Narration(Base):
-    """Narration committed by a user against an organisation object."""
+    """Narration attached to an object and created within an account context."""
 
     __tablename__ = "narrations"
 
@@ -21,21 +21,21 @@ class Narration(Base):
         default=uuid.uuid4,
     )
 
-    organisation_id: Mapped[uuid.UUID] = mapped_column(
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
     object_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("objects.id", ondelete="RESTRICT"),
-        nullable=False,
-    )
-
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
