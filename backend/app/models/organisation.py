@@ -1,9 +1,9 @@
-"""RECCORD DB organisation model."""
+"""RECCORD DB organisation/tenant model."""
 
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class Organisation(Base):
-    """Organisation belonging to one Admin account."""
+    """Organisation tenant and its admin account."""
 
     __tablename__ = "organisations"
 
@@ -21,14 +21,7 @@ class Organisation(Base):
         default=uuid.uuid4,
     )
 
-    admin_user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
-        nullable=False,
-        unique=True,
-    )
-
-    business_organisation_name: Mapped[str] = mapped_column(
+    business_name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
     )
@@ -39,7 +32,7 @@ class Organisation(Base):
     )
 
     country: Mapped[str] = mapped_column(
-        String(100),
+        String(2),
         nullable=False,
     )
 
@@ -49,23 +42,26 @@ class Organisation(Base):
     )
 
     language: Mapped[str] = mapped_column(
-        String(32),
+        String(16),
         nullable=False,
+        default="en",
     )
 
-    organisation_uid: Mapped[str] = mapped_column(
+    password_hash: Mapped[str] = mapped_column(
         String(255),
-        unique=True,
         nullable=False,
     )
 
+    # One organisation-wide worker registration identity.
+    # This is shared by every worker belonging to this organisation.
     worker_id: Mapped[str] = mapped_column(
-        String(64),
+        String(128),
         nullable=False,
+        unique=True,
     )
 
-    status: Mapped[str] = mapped_column(
-        String(32),
+    worker_registration_credential_hash: Mapped[str] = mapped_column(
+        String(255),
         nullable=False,
     )
 
