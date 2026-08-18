@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class ObjectVersion(Base):
-    """Immutable version of an object's details."""
+    """Immutable version history for an object."""
 
     __tablename__ = "object_versions"
 
@@ -32,18 +32,8 @@ class ObjectVersion(Base):
         nullable=False,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
-
-    description: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
-    status: Mapped[str] = mapped_column(
-        String(32),
+    snapshot: Mapped[dict] = mapped_column(
+        JSON,
         nullable=False,
     )
 
