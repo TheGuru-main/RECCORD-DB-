@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class UserVersion(Base):
-    """Immutable version history for user details."""
+    """Immutable version history for a user account."""
 
     __tablename__ = "user_versions"
 

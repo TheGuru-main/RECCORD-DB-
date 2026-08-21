@@ -1,4 +1,4 @@
-"""RECCORD DB narration version model."""
+"""RECCORD DB organisation role version model."""
 
 import uuid
 from datetime import datetime
@@ -10,10 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
-class NarrationVersion(Base):
-    """Immutable version history for a narration."""
+class RoleVersion(Base):
+    """Immutable version history for an organisation role."""
 
-    __tablename__ = "narration_versions"
+    __tablename__ = "role_versions"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -21,9 +21,9 @@ class NarrationVersion(Base):
         default=uuid.uuid4,
     )
 
-    narration_id: Mapped[uuid.UUID] = mapped_column(
+    role_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("narrations.id", ondelete="RESTRICT"),
+        ForeignKey("roles.id", ondelete="RESTRICT"),
         nullable=False,
     )
 

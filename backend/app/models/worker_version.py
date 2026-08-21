@@ -1,4 +1,4 @@
-"""RECCORD DB narration version model."""
+"""RECCORD DB worker version model."""
 
 import uuid
 from datetime import datetime
@@ -10,10 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
-class NarrationVersion(Base):
-    """Immutable version history for a narration."""
+class WorkerVersion(Base):
+    """Immutable version history for a worker account."""
 
-    __tablename__ = "narration_versions"
+    __tablename__ = "worker_versions"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -21,9 +21,9 @@ class NarrationVersion(Base):
         default=uuid.uuid4,
     )
 
-    narration_id: Mapped[uuid.UUID] = mapped_column(
+    worker_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("narrations.id", ondelete="RESTRICT"),
+        ForeignKey("workers.id", ondelete="RESTRICT"),
         nullable=False,
     )
 

@@ -47,4 +47,3 @@ class Lookup(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-    )

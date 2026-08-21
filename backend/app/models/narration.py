@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Text, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,9 +11,26 @@ from app.core.database import Base
 
 
 class Narration(Base):
-    """Narration attached to an object and created within an account context."""
+    """Narration attached to an object within its account context."""
 
     __tablename__ = "narrations"
+
+    __table_args__ = (
+        CheckConstraint(
+            """
+            (
+                organisation_id IS NOT NULL
+                AND owner_user_id IS NULL
+            )
+            OR
+            (
+                organisation_id IS NULL
+                AND owner_user_id IS NOT NULL
+            )
+            """,
+            name="ck_narrations_single_owner_context",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -27,10 +44,10 @@ class Narration(Base):
         nullable=True,
     )
 
-    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
 
     object_id: Mapped[uuid.UUID] = mapped_column(

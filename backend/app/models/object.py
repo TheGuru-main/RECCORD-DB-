@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,9 +11,26 @@ from app.core.database import Base
 
 
 class ObjectRecord(Base):
-    """Object committed by a regular user or within an organisation."""
+    """Object belonging to either a regular user or an organisation."""
 
     __tablename__ = "objects"
+
+    __table_args__ = (
+        CheckConstraint(
+            """
+            (
+                organisation_id IS NOT NULL
+                AND owner_user_id IS NULL
+            )
+            OR
+            (
+                organisation_id IS NULL
+                AND owner_user_id IS NOT NULL
+            )
+            """,
+            name="ck_objects_single_owner_context",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

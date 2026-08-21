@@ -27,7 +27,7 @@ class AdminUpdate(Base):
         nullable=False,
     )
 
-    worker_id: Mapped[uuid.UUID] = mapped_column(
+    worker_account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("workers.id", ondelete="RESTRICT"),
         nullable=False,

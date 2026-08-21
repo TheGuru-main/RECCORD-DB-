@@ -1,19 +1,19 @@
-"""RECCORD DB regular-user commit model."""
+"""RECCORD DB regular-user commit version model."""
 
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
 
-class RegularCommit(Base):
-    """Commit belonging to a regular user's account context."""
+class RegularCommitVersion(Base):
+    """Immutable version history for a regular-user commit."""
 
-    __tablename__ = "regular_commits"
+    __tablename__ = "regular_commit_versions"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -21,26 +21,19 @@ class RegularCommit(Base):
         default=uuid.uuid4,
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    commit_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
+        ForeignKey("regular_commits.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
-    object_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("objects.id", ondelete="RESTRICT"),
+    version: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
     )
 
-    narration_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("narrations.id", ondelete="RESTRICT"),
-        nullable=False,
-    )
-
-    status: Mapped[str] = mapped_column(
-        String(32),
+    snapshot: Mapped[dict] = mapped_column(
+        JSON,
         nullable=False,
     )
 

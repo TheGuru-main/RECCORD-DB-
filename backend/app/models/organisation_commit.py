@@ -11,10 +11,11 @@ from app.core.database import Base
 
 
 class OrganisationCommit(Base):
-    """
-    Commit recorded inside one Admin organisation.
+    """Commit recorded inside one organisation's shared commit context.
 
-    Admin and Workers share this organisation's commit grid.
+    Admin and workers share the organisation's commit grid.
+    The actor is identified by user_id and their role is recorded
+    at the time of the commit.
     """
 
     __tablename__ = "organisation_commits"
@@ -50,7 +51,7 @@ class OrganisationCommit(Base):
     )
 
     role: Mapped[str] = mapped_column(
-        String(32),
+        String(128),
         nullable=False,
     )
 

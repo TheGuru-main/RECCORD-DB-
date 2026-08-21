@@ -11,7 +11,7 @@ from app.core.database import Base
 
 
 class RegularCommit(Base):
-    """Commit belonging to a regular user's account context."""
+    """Commit belonging exclusively to a regular user's account context."""
 
     __tablename__ = "regular_commits"
 
