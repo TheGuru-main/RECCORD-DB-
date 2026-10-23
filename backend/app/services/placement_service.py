@@ -2,34 +2,32 @@
 
 from __future__ import annotations
 
-import uuid
-
 from app.core.gsp import GSPPlacement, gsp_place
 
 
 def place_regular_commit(
     *,
-    user_id: uuid.UUID,
+    account_uid: str,
     object_name: str,
 ) -> GSPPlacement:
-    """Calculate placement for a regular user's committed object."""
+    """Calculate placement using the regular account's established uID."""
 
     return gsp_place(
         account_type="regular",
-        account_id=str(user_id),
+        account_uid=account_uid,
         name=object_name,
     )
 
 
 def place_organisation_commit(
     *,
-    organisation_id: uuid.UUID,
+    account_uid: str,
     object_name: str,
 ) -> GSPPlacement:
-    """Calculate placement for an organisation's committed object."""
+    """Calculate placement using the organisation's established uID."""
 
     return gsp_place(
         account_type="organisation",
-        account_id=str(organisation_id),
+        account_uid=account_uid,
         name=object_name,
     )

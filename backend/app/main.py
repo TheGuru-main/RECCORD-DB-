@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
+from app.api.objects import router as objects_router
+from app.api.narrations import router as narrations_router
 from app.core.schema import initialize_schema
 
 
@@ -23,6 +25,8 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(objects_router)
+app.include_router(narrations_router)
 
 
 @app.get("/health")
