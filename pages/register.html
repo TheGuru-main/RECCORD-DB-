@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — RECCORD DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <h2>Create Account</h2>
+
+    <label>Account Type</label>
+    <select id="accountType">
+      <option value="regular">Regular User</option>
+      <option value="organisation">Organisation (Admin)</option>
+    </select>
+
+    <label>Full Name / Business Name</label>
+    <input type="text" placeholder="Name" />
+
+    <label>Phone Number</label>
+    <input type="tel" placeholder="+234..." />
+
+    <label>Business / Organization Type</label>
+    <select>
+      <option value="">Select type (optional for regular)</option>
+      <option>School</option>
+      <option>Hospital / Clinic</option>
+      <option>Hotel</option>
+      <option>Restaurant / Eatery</option>
+      <option>Bar</option>
+      <option>Bakery</option>
+      <option>Retail / POS</option>
+      <option>Park / Recreation</option>
+      <option>Filling Station</option>
+      <option>Government House</option>
+      <option>Office / General Business</option>
+      <option>Personal / Individual</option>
+      <option>Other</option>
+    </select>
+
+    <label>Password</label>
+    <input type="password" />
+
+    <a href="home.html" class="btn primary">Create Account</a>
+    <a href="login.html" class="btn">Already have an account?</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Election Host Signup</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../../css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <h2>Election Host Signup</h2>
+    <p>Create your Election Host account</p>
+
+    <label>Full Name *</label>
+    <input type="text" id="hostName" placeholder="Your full name" />
+
+    <label>Phone Number *</label>
+    <input type="tel" id="hostPhone" placeholder="+234..." />
+
+    <label>School ID or National ID *</label>
+    <input type="text" id="hostIdentity" placeholder="ID number" />
+
+    <label>Photo</label>
+    <input type="file" id="hostPhoto" accept="image/*" />
+
+    <button class="btn primary" onclick="createHost()">Create Host Account</button>
+    <a href="type.html" class="btn">← Back</a>
+    <p id="error" style="color:#f87171;margin-top:1rem;"></p>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script>
+    function createHost() {
+      const name = document.getElementById('hostName').value.trim();
+      const phone = document.getElementById('hostPhone').value.trim();
+      const identity = document.getElementById('hostIdentity').value.trim();
+      const errorEl = document.getElementById('error');
+
+      if (!name || !phone || !identity) {
+        errorEl.textContent = "All fields are required";
+        return;
+      }
+
+      // Store host info for later election creation
+      sessionStorage.setItem('hostName', name);
+      sessionStorage.setItem('hostPhone', phone);
+      sessionStorage.setItem('hostIdentity', identity);
+
+      window.location.href = "host-dashboard.html";
+    }
+  </script>
+</body>
+</html>

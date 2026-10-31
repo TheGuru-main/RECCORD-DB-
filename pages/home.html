@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workspace — RECCORD DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 0.9rem;
+      text-align: center;
+    }
+    .stat-card strong {
+      display: block;
+      font-size: 1.3rem;
+      color: #60a5fa;
+    }
+    .stat-card span {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .section-title {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin: 1.25rem 0 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h2>Workspace</h2>
+    <p id="welcomeText">Welcome back</p>
+
+    <div class="stats">
+      <div class="stat-card">
+        <strong>0</strong>
+        <span>My Commits</span>
+      </div>
+      <div class="stat-card">
+        <strong>—</strong>
+        <span>Role</span>
+      </div>
+    </div>
+
+    <div class="section-title">Grid (54 × 64)</div>
+    <div class="grid-box">
+      GSP Grid • Placements appear here
+    </div>
+
+    <div class="section-title">Recent Activity</div>
+    <div class="card">
+      <p style="margin:0;font-size:0.9rem;color:#94a3b8;">No recent commits yet. Tap + to create your first record.</p>
+    </div>
+  </div>
+
+  <!-- Floating Commit Button -->
+  <a href="commit.html" class="fab" title="New Commit">
+    <i class="fa fa-plus"></i>
+  </a>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="home.html" class="active"><i class="fa fa-home"></i>Home</a>
+    <a href="search.html"><i class="fa fa-search"></i>Search</a>
+    <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="profile.html"><i class="fa fa-user"></i>Profile</a>
+  </nav>
+</body>
+</html>
