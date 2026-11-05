@@ -1,6 +1,5 @@
 // RECCORD DB API helper
-// Replace with your real Render URL after first deploy
-const API_BASE = "https://reccord-api.onrender.com";
+const API_BASE = "https://reccord-db-apiv1-0-0-1q.onrender.com";
 
 async function api(path, options = {}) {
   const url = API_BASE + path;
