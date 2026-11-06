@@ -18,6 +18,23 @@
       font-size: 0.85rem; color: #94a3b8; margin: 1.1rem 0 0.45rem;
       text-transform: uppercase; letter-spacing: 0.04em;
     }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: 2px;
+      background: #0f172a;
+      padding: 6px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      max-height: 180px;
+      overflow: hidden;
+    }
+    .mini-grid span {
+      aspect-ratio: 1;
+      background: #1e293b;
+      border-radius: 2px;
+    }
+    .mini-grid span.on { background: #2563eb; }
   </style>
 </head>
 <body>
@@ -43,14 +60,17 @@
   <div class="page">
     <p id="welcomeText" style="margin-bottom:1rem;">Welcome</p>
     <div class="stats">
-      <div class="stat-card"><strong id="commitCount">0</strong><span>Commits</span></div>
+      <div class="stat-card"><strong id="commitCount">0</strong><span>Local commits</span></div>
       <div class="stat-card"><strong id="roleLabel">—</strong><span>Account</span></div>
     </div>
-    <div class="section-title">Placement Grid (this tenant)</div>
-    <div class="grid-box">Per-tenant GSP grid • 54×64</div>
+
+    <div class="section-title">Placement Grid (this tenant only)</div>
+    <div class="mini-grid" id="miniGrid" title="Visual stand-in for 54×64 GSP grid"></div>
+    <p style="font-size:0.8rem;color:#64748b;margin-top:0.4rem;">Per-tenant GSP • not a global shared grid</p>
+
     <div class="section-title">Recent Activity</div>
-    <div class="card">
-      <p style="margin:0;font-size:0.9rem;color:#94a3b8;">No recent commits yet.</p>
+    <div id="recentList">
+      <div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">No recent commits yet.</p></div>
     </div>
   </div>
 
@@ -77,6 +97,25 @@
     if (isAdmin()) {
       document.getElementById('adminSection').style.display = 'block';
       document.getElementById('workersLink').style.display = 'block';
+    }
+
+    // Mini grid visual (16x8 cells lit by recent count)
+    const grid = document.getElementById('miniGrid');
+    const recent = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
+    document.getElementById('commitCount').textContent = String(recent.length);
+    let html = '';
+    for (let i = 0; i < 128; i++) {
+      html += '<span class="' + (i < recent.length ? 'on' : '') + '"></span>';
+    }
+    grid.innerHTML = html;
+
+    const list = document.getElementById('recentList');
+    if (recent.length) {
+      list.innerHTML = recent.slice(0, 8).map(r => `
+        <div class="card">
+          <strong>${r.name}</strong>
+          <p style="margin:0.25rem 0 0;font-size:0.8rem;color:#94a3b8;">${new Date(r.at).toLocaleString()}</p>
+        </div>`).join('');
     }
   </script>
 </body>

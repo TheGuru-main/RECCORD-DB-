@@ -7,34 +7,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="../css/style.css" />
   <style>
-    .tools {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 0.75rem;
-    }
+    .tools { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
     .tools button {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #e2e8f0;
-      padding: 0.4rem 0.6rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      cursor: pointer;
+      background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+      padding: 0.4rem 0.6rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
     }
-    .tools button:active {
-      background: #334155;
-    }
-    textarea {
-      min-height: 140px;
-      resize: vertical;
-    }
+    textarea { min-height: 140px; resize: vertical; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <h2>New Commit</h2>
+  <header class="app-header">
+    <button class="menu-btn" onclick="history.back()"><i class="fa fa-arrow-left"></i></button>
+    <span class="title">New Commit</span>
+    <span class="user-label" id="headerName"></span>
+  </header>
 
+  <div class="page">
     <label>Object / Title *</label>
     <input type="text" id="objectName" placeholder="What are you recording?" />
 
@@ -43,9 +31,6 @@
       <button type="button" onclick="format('bold')"><i class="fa fa-bold"></i></button>
       <button type="button" onclick="format('underline')"><i class="fa fa-underline"></i></button>
       <button type="button" onclick="format('insertUnorderedList')"><i class="fa fa-list-ul"></i></button>
-      <button type="button" title="Copy"><i class="fa fa-copy"></i></button>
-      <button type="button" title="Calculator"><i class="fa fa-calculator"></i></button>
-      <button type="button" title="Align Center"><i class="fa fa-align-center"></i></button>
     </div>
     <textarea id="narration" placeholder="Details, notes, story..."></textarea>
 
@@ -56,27 +41,68 @@
       <option value="immutable">Immutable</option>
     </select>
 
-    <label>Attach Media (Image / Voice / Video / Document)</label>
+    <label>Attach Media (stored later with full media pipeline)</label>
     <input type="file" id="media" accept="image/*,audio/*,video/*,.pdf,.doc,.docx" />
 
-    <button class="btn primary" onclick="submitCommit()">Commit</button>
+    <button class="btn primary" id="submitBtn" onclick="submitCommit()">Commit</button>
     <a href="home.html" class="btn">Cancel</a>
+    <p id="error" style="color:#f87171;"></p>
+    <p id="success" style="color:#4ade80;"></p>
   </div>
 
+  <script src="../js/api.js"></script>
+  <script src="../js/shell.js"></script>
   <script>
+    if (!requireAuth()) throw new Error('auth');
+    document.getElementById('headerName').textContent = getDisplayName();
+
     function format(cmd) {
       document.execCommand(cmd, false, null);
     }
 
-    function submitCommit() {
+    async function submitCommit() {
       const name = document.getElementById('objectName').value.trim();
+      const content = document.getElementById('narration').value.trim();
+      const errorEl = document.getElementById('error');
+      const successEl = document.getElementById('success');
+      const btn = document.getElementById('submitBtn');
+
+      errorEl.textContent = '';
+      successEl.textContent = '';
+
       if (!name) {
-        alert('Object / Title is required');
+        errorEl.textContent = 'Object / Title is required';
         return;
       }
-      // Later: send to backend
-      alert('Commit recorded (demo)');
-      window.location.href = 'home.html';
+
+      btn.disabled = true;
+      btn.textContent = 'Committing...';
+
+      try {
+        // 1. Create object (GSP placement happens server-side)
+        const obj = await ObjectsAPI.create(name);
+
+        // 2. Optional narration
+        if (content) {
+          await NarrationsAPI.create(obj.id, content);
+        }
+
+        // Store last commit locally for Home recent list
+        const recent = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
+        recent.unshift({
+          id: obj.id,
+          name: obj.name || name,
+          at: new Date().toISOString()
+        });
+        localStorage.setItem('reccord_recent', JSON.stringify(recent.slice(0, 20)));
+
+        successEl.textContent = 'Commit saved.';
+        setTimeout(() => { window.location.href = 'home.html'; }, 700);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = 'Commit';
+      }
     }
   </script>
 </body>

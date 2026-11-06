@@ -2,10 +2,15 @@ const API_BASE = "https://reccord-db-apiv1-0-0-1q.onrender.com";
 
 async function api(path, options = {}) {
   const url = API_BASE + path;
-  const config = {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options
+  const token = localStorage.getItem("reccord_token");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
   };
+  if (token && !headers.Authorization) {
+    headers.Authorization = "Bearer " + token;
+  }
+  const config = { ...options, headers };
   if (config.body && typeof config.body === "object") {
     config.body = JSON.stringify(config.body);
   }
@@ -26,6 +31,20 @@ const AuthAPI = {
   workerRoles(p) { return api("/auth/worker/roles", { method: "POST", body: p }); },
   workerRegister(p) { return api("/auth/worker/register", { method: "POST", body: p }); },
   workerLogin(p) { return api("/auth/worker/login", { method: "POST", body: p }); }
+};
+
+const ObjectsAPI = {
+  create(name) { return api("/objects", { method: "POST", body: { name } }); },
+  get(id) { return api("/objects/" + id); }
+};
+
+const NarrationsAPI = {
+  create(objectId, content) {
+    return api("/narrations", {
+      method: "POST",
+      body: { object_id: objectId, content }
+    });
+  }
 };
 
 const ElectionsAPI = {
