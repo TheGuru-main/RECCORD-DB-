@@ -21,14 +21,16 @@
     <a href="messages.html">Messages</a>
     <a href="records.html" class="active">Records</a>
     <a href="profile.html">Profile</a>
+    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
+    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
     <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
   </aside>
+
   <div class="page">
-    <p>Your commits (scoped by role)</p>
-    <div class="card">
-      <p style="margin:0;font-size:0.9rem;color:#94a3b8;">No records yet. Use + on Home to commit.</p>
-    </div>
+    <p id="scopeNote" style="font-size:0.9rem;">Your commits (this device / session cache)</p>
+    <div id="list"></div>
   </div>
+
   <nav class="bottom-nav">
     <a href="home.html"><i class="fa fa-home"></i>Home</a>
     <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
@@ -36,11 +38,55 @@
     <a href="records.html" class="active"><i class="fa fa-folder-open"></i>Records</a>
     <a href="profile.html"><i class="fa fa-user"></i>Me</a>
   </nav>
+
   <script src="../js/api.js"></script>
   <script src="../js/shell.js"></script>
   <script>
     if (!requireAuth()) throw new Error('auth');
     document.getElementById('headerName').textContent = getDisplayName();
+    if (isAdmin()) {
+      document.getElementById('adminSection').style.display = 'block';
+      document.getElementById('workersLink').style.display = 'block';
+    }
+
+    const type = localStorage.getItem('reccord_account_type') || '';
+    document.getElementById('scopeNote').textContent =
+      type === 'organisation'
+        ? 'Organisation records (local cache until list API)'
+        : type === 'worker'
+        ? 'Your worker commits only (local cache)'
+        : 'Your personal commits (local cache)';
+
+    const recent = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
+    const list = document.getElementById('list');
+
+    if (!recent.length) {
+      list.innerHTML = '<div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">No records yet. Use + on Home to commit.</p></div>';
+    } else {
+      list.innerHTML = recent.map(r => `
+        <div class="card" onclick="openRecord('${r.id}')" style="cursor:pointer;">
+          <strong>${escapeHtml(r.name)}</strong>
+          <p style="margin:0.3rem 0 0;font-size:0.8rem;color:#94a3b8;">
+            ${new Date(r.at).toLocaleString()}
+            ${r.id ? ' • ' + String(r.id).slice(0, 8) + '…' : ''}
+          </p>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function openRecord(id) {
+      if (!id) return;
+      try {
+        const obj = await ObjectsAPI.get(id);
+        alert('Object: ' + (obj.name || id) + '\nStatus: ' + (obj.status || '—'));
+      } catch (err) {
+        alert(err.message);
+      }
+    }
   </script>
 </body>
 </html>

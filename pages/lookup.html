@@ -21,14 +21,18 @@
     <a href="messages.html">Messages</a>
     <a href="records.html">Records</a>
     <a href="profile.html">Profile</a>
+    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
+    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
     <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
   </aside>
+
   <div class="page">
     <label>Search by name</label>
-    <input type="search" id="q" placeholder="Object or commit name..." />
-    <p style="font-size:0.9rem;">Results are scoped to your permission (own / org).</p>
-    <div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">Lookup will query your tenant only.</p></div>
+    <input type="search" id="q" placeholder="Object or commit name..." oninput="runSearch()" />
+    <p style="font-size:0.85rem;color:#94a3b8;">Scoped to your tenant / account. Not a global search.</p>
+    <div id="results"></div>
   </div>
+
   <nav class="bottom-nav">
     <a href="home.html"><i class="fa fa-home"></i>Home</a>
     <a href="lookup.html" class="active"><i class="fa fa-search"></i>Lookup</a>
@@ -36,11 +40,44 @@
     <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
     <a href="profile.html"><i class="fa fa-user"></i>Me</a>
   </nav>
+
   <script src="../js/api.js"></script>
   <script src="../js/shell.js"></script>
   <script>
     if (!requireAuth()) throw new Error('auth');
     document.getElementById('headerName').textContent = getDisplayName();
+    if (isAdmin()) {
+      document.getElementById('adminSection').style.display = 'block';
+      document.getElementById('workersLink').style.display = 'block';
+    }
+
+    const all = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
+
+    function runSearch() {
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      const el = document.getElementById('results');
+      if (!q) {
+        el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">Type a name to search your scope.</p></div>';
+        return;
+      }
+      const hits = all.filter(r => (r.name || '').toLowerCase().includes(q));
+      if (!hits.length) {
+        el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">No matches in your permission scope.</p></div>';
+        return;
+      }
+      el.innerHTML = hits.map(r => `
+        <div class="card">
+          <strong>${escapeHtml(r.name)}</strong>
+          <p style="margin:0.3rem 0 0;font-size:0.8rem;color:#94a3b8;">${new Date(r.at).toLocaleString()}</p>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    runSearch();
   </script>
 </body>
 </html>
