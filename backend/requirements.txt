@@ -5,3 +5,4 @@ psycopg
 pydantic-settings
 python-jose
 passlib
+boto3>=1.34.0

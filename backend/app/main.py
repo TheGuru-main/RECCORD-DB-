@@ -11,6 +11,7 @@ from app.api.narrations import router as narrations_router
 from app.api.workers import router as workers_router
 from app.api.roles import router as roles_router
 from app.api.elections import router as elections_router
+from app.api.grid import router as grid_router
 from app.core.schema import initialize_schema
 
 
@@ -40,6 +41,7 @@ app.include_router(narrations_router)
 app.include_router(workers_router)
 app.include_router(roles_router)
 app.include_router(elections_router)
+app.include_router(grid_router)
 
 
 @app.get("/health")

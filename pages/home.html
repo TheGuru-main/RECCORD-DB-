@@ -60,17 +60,17 @@
   <div class="page">
     <p id="welcomeText" style="margin-bottom:1rem;">Welcome</p>
     <div class="stats">
-      <div class="stat-card"><strong id="commitCount">0</strong><span>Local commits</span></div>
+      <div class="stat-card"><strong id="commitCount">0</strong><span>Placements</span></div>
       <div class="stat-card"><strong id="roleLabel">—</strong><span>Account</span></div>
     </div>
 
-    <div class="section-title">Placement Grid (this tenant only)</div>
-    <div class="mini-grid" id="miniGrid" title="Visual stand-in for 54×64 GSP grid"></div>
-    <p style="font-size:0.8rem;color:#64748b;margin-top:0.4rem;">Per-tenant GSP • not a global shared grid</p>
+    <div class="section-title">Placement Grid (tenant / B2)</div>
+    <div class="mini-grid" id="miniGrid"></div>
+    <p id="gridMeta" style="font-size:0.8rem;color:#64748b;margin-top:0.4rem;">Loading grid…</p>
 
-    <div class="section-title">Recent Activity</div>
+    <div class="section-title">Recent placements</div>
     <div id="recentList">
-      <div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">No recent commits yet.</p></div>
+      <div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">Loading…</p></div>
     </div>
   </div>
 
@@ -99,24 +99,50 @@
       document.getElementById('workersLink').style.display = 'block';
     }
 
-    // Mini grid visual (16x8 cells lit by recent count)
-    const grid = document.getElementById('miniGrid');
-    const recent = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
-    document.getElementById('commitCount').textContent = String(recent.length);
-    let html = '';
-    for (let i = 0; i < 128; i++) {
-      html += '<span class="' + (i < recent.length ? 'on' : '') + '"></span>';
-    }
-    grid.innerHTML = html;
+    async function loadGrid() {
+      const gridEl = document.getElementById('miniGrid');
+      const metaEl = document.getElementById('gridMeta');
+      const listEl = document.getElementById('recentList');
+      try {
+        const meta = await GridAPI.getMine();
+        const placements = meta.placements || [];
+        document.getElementById('commitCount').textContent = String(placements.length);
 
-    const list = document.getElementById('recentList');
-    if (recent.length) {
-      list.innerHTML = recent.slice(0, 8).map(r => `
-        <div class="card">
-          <strong>${r.name}</strong>
-          <p style="margin:0.25rem 0 0;font-size:0.8rem;color:#94a3b8;">${new Date(r.at).toLocaleString()}</p>
-        </div>`).join('');
+        let html = '';
+        for (let i = 0; i < 128; i++) {
+          html += '<span class="' + (i < placements.length ? 'on' : '') + '"></span>';
+        }
+        gridEl.innerHTML = html;
+
+        metaEl.textContent =
+          (meta.rows || 54) + '×' + (meta.cols || 64) +
+          ' • storage: ' + (meta.storage || '—') +
+          (meta.updated_at ? ' • updated ' + new Date(meta.updated_at).toLocaleString() : '');
+
+        if (!placements.length) {
+          listEl.innerHTML = '<div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">No placements yet. Commit to write to your tenant grid on B2.</p></div>';
+        } else {
+          listEl.innerHTML = placements.slice(0, 12).map(p => `
+            <div class="card">
+              <strong>${escapeHtml(p.object_name || p.placement_id)}</strong>
+              <p style="margin:0.25rem 0 0;font-size:0.8rem;color:#94a3b8;">
+                ${p.created_at ? new Date(p.created_at).toLocaleString() : ''}
+                ${p.gsp_key ? ' • ' + escapeHtml(String(p.gsp_key).slice(0, 40)) : ''}
+              </p>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        metaEl.textContent = 'Grid error: ' + err.message;
+        listEl.innerHTML = '<div class="card"><p style="margin:0;color:#f87171;font-size:0.9rem;">' + escapeHtml(err.message) + '</p></div>';
+      }
     }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadGrid();
   </script>
 </body>
 </html>

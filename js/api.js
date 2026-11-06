@@ -14,10 +14,17 @@ async function api(path, options = {}) {
   if (config.body && typeof config.body === "object") {
     config.body = JSON.stringify(config.body);
   }
-  const res = await fetch(url, config);
+
+  let res;
+  try {
+    res = await fetch(url, config);
+  } catch (err) {
+    throw new Error("Network error: cannot reach API (" + API_BASE + ")");
+  }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const message = data.detail || data.message || "Request failed";
+    const message = data.detail || data.message || ("HTTP " + res.status);
     throw new Error(typeof message === "string" ? message : JSON.stringify(message));
   }
   return data;
@@ -47,16 +54,20 @@ const NarrationsAPI = {
   }
 };
 
+const GridAPI = {
+  getMine() { return api("/grid"); }
+};
+
 const ElectionsAPI = {
   create(p) { return api("/elections/create", { method: "POST", body: p }); },
   addCandidate(p) { return api("/elections/candidates", { method: "POST", body: p }); },
-  publish(id) { return api(`/elections/${id}/publish`, { method: "POST" }); },
-  getByCredential(c) { return api(`/elections/credential/${c}`); },
-  listCandidates(id) { return api(`/elections/${id}/candidates`); },
+  publish(id) { return api("/elections/" + id + "/publish", { method: "POST" }); },
+  getByCredential(c) { return api("/elections/credential/" + c); },
+  listCandidates(id) { return api("/elections/" + id + "/candidates"); },
   registerVoter(p) { return api("/elections/voters/register", { method: "POST", body: p }); },
   castVote(p) { return api("/elections/vote", { method: "POST", body: p }); },
-  getResults(id) { return api(`/elections/${id}/results`); },
-  listHostElections(phone) { return api(`/elections/host/${phone}`); }
+  getResults(id) { return api("/elections/" + id + "/results"); },
+  listHostElections(phone) { return api("/elections/host/" + phone); }
 };
 
 function saveSession(data) {
@@ -67,7 +78,14 @@ function saveSession(data) {
   if (data.worker) localStorage.setItem("reccord_worker", JSON.stringify(data.worker));
   if (data.worker_credential) localStorage.setItem("reccord_worker_credential", data.worker_credential);
 }
+
 function clearSession() {
-  ["reccord_token","reccord_account_type","reccord_user","reccord_organisation","reccord_worker","reccord_worker_credential"]
-    .forEach(k => localStorage.removeItem(k));
+  [
+    "reccord_token",
+    "reccord_account_type",
+    "reccord_user",
+    "reccord_organisation",
+    "reccord_worker",
+    "reccord_worker_credential"
+  ].forEach(function (k) { localStorage.removeItem(k); });
 }
