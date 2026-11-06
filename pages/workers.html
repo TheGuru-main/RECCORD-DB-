@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workers — RECCORD DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <button class="menu-btn" onclick="openDrawer()"><i class="fa fa-bars"></i></button>
+    <span class="title">Workers</span>
+    <span class="user-label" id="headerName"></span>
+  </header>
+
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="side-drawer" id="sideDrawer">
+    <div class="drawer-section">Menu</div>
+    <a href="home.html">Workspace</a>
+    <a href="lookup.html">Lookup</a>
+    <a href="messages.html">Messages</a>
+    <a href="records.html">Records</a>
+    <a href="profile.html">Profile</a>
+    <div class="drawer-section">Admin</div>
+    <a href="workers.html" class="active">Workers</a>
+    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+  </aside>
+
+  <div class="page">
+    <h2 style="font-size:1.15rem;">Pending approvals</h2>
+    <div id="pendingList">
+      <p style="color:#94a3b8;font-size:0.9rem;">Loading...</p>
+    </div>
+
+    <h2 style="font-size:1.15rem;margin-top:1.5rem;">All workers</h2>
+    <div id="allList">
+      <p style="color:#94a3b8;font-size:0.9rem;">Loading...</p>
+    </div>
+    <p id="error" style="color:#f87171;"></p>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="home.html"><i class="fa fa-home"></i>Home</a>
+    <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
+    <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="profile.html"><i class="fa fa-user"></i>Me</a>
+  </nav>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error('auth');
+    if (!isAdmin()) {
+      alert('Admin only');
+      window.location.href = 'home.html';
+    }
+    document.getElementById('headerName').textContent = getDisplayName();
+
+    const org = JSON.parse(localStorage.getItem('reccord_organisation') || 'null');
+    const orgId = org?.id;
+    const token = localStorage.getItem('reccord_token');
+
+    async function apiAuth(path, options = {}) {
+      return api(path, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: 'Bearer ' + token
+        }
+      });
+    }
+
+    async function loadPending() {
+      const el = document.getElementById('pendingList');
+      try {
+        // Uses existing workers API: GET /workers/pending?organisation_id=...
+        // If your route differs, adjust path below
+        const data = await apiAuth('/workers/pending?organisation_id=' + encodeURIComponent(orgId));
+        const list = data.workers || data || [];
+        if (!list.length) {
+          el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">No pending workers</p></div>';
+          return;
+        }
+        el.innerHTML = list.map(w => `
+          <div class="card">
+            <strong>${w.name || w.user_id || 'Worker'}</strong>
+            <p style="margin:0.3rem 0;font-size:0.85rem;color:#94a3b8;">Role: ${w.role || '—'} • ${w.status || 'pending'}</p>
+            <button class="btn primary" style="margin-bottom:0.4rem;" onclick="approve('${w.id}')">Approve</button>
+            <button class="btn danger" onclick="reject('${w.id}')">Reject</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        el.innerHTML = '<div class="card"><p style="margin:0;color:#f87171;font-size:0.9rem;">' + err.message + '</p></div>';
+      }
+    }
+
+    async function loadAll() {
+      const el = document.getElementById('allList');
+      try {
+        const data = await apiAuth('/workers?organisation_id=' + encodeURIComponent(orgId));
+        const list = data.workers || data || [];
+        if (!list.length) {
+          el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">No workers yet</p></div>';
+          return;
+        }
+        el.innerHTML = list.map(w => `
+          <div class="card">
+            <strong>${w.name || w.user_id || 'Worker'}</strong>
+            <p style="margin:0.3rem 0 0;font-size:0.85rem;color:#94a3b8;">${w.role || '—'} • ${w.status || '—'}</p>
+          </div>
+        `).join('');
+      } catch (err) {
+        el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">Could not load list</p></div>';
+      }
+    }
+
+    async function approve(workerId) {
+      try {
+        await apiAuth('/workers/' + workerId + '/approve?organisation_id=' + encodeURIComponent(orgId), { method: 'POST' });
+        loadPending();
+        loadAll();
+      } catch (err) {
+        document.getElementById('error').textContent = err.message;
+      }
+    }
+
+    async function reject(workerId) {
+      try {
+        await apiAuth('/workers/' + workerId + '/reject?organisation_id=' + encodeURIComponent(orgId), { method: 'POST' });
+        loadPending();
+        loadAll();
+      } catch (err) {
+        document.getElementById('error').textContent = err.message;
+      }
+    }
+
+    loadPending();
+    loadAll();
+  </script>
+</body>
+</html>

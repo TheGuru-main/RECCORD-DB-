@@ -8,17 +8,39 @@
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
+  <header class="app-header">
+    <button class="menu-btn" onclick="openDrawer()"><i class="fa fa-bars"></i></button>
+    <span class="title">Records</span>
+    <span class="user-label" id="headerName"></span>
+  </header>
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="side-drawer" id="sideDrawer">
+    <div class="drawer-section">Menu</div>
+    <a href="home.html">Workspace</a>
+    <a href="lookup.html">Lookup</a>
+    <a href="messages.html">Messages</a>
+    <a href="records.html" class="active">Records</a>
+    <a href="profile.html">Profile</a>
+    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+  </aside>
   <div class="page">
-    <h2>Records</h2>
     <p>Your commits (scoped by role)</p>
-    <div class="card">No records yet</div>
+    <div class="card">
+      <p style="margin:0;font-size:0.9rem;color:#94a3b8;">No records yet. Use + on Home to commit.</p>
+    </div>
   </div>
-
   <nav class="bottom-nav">
     <a href="home.html"><i class="fa fa-home"></i>Home</a>
-    <a href="search.html"><i class="fa fa-search"></i>Search</a>
+    <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
     <a href="records.html" class="active"><i class="fa fa-folder-open"></i>Records</a>
-    <a href="profile.html"><i class="fa fa-user"></i>Profile</a>
+    <a href="profile.html"><i class="fa fa-user"></i>Me</a>
   </nav>
+  <script src="../js/api.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error('auth');
+    document.getElementById('headerName').textContent = getDisplayName();
+  </script>
 </body>
 </html>

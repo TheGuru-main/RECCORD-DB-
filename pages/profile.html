@@ -8,54 +8,64 @@
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
+  <header class="app-header">
+    <button class="menu-btn" onclick="openDrawer()"><i class="fa fa-bars"></i></button>
+    <span class="title">Profile</span>
+    <span class="user-label" id="headerName"></span>
+  </header>
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="side-drawer" id="sideDrawer">
+    <div class="drawer-section">Menu</div>
+    <a href="home.html">Workspace</a>
+    <a href="lookup.html">Lookup</a>
+    <a href="messages.html">Messages</a>
+    <a href="records.html">Records</a>
+    <a href="profile.html" class="active">Profile</a>
+    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
+    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
+    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+  </aside>
   <div class="page">
-    <h2>Profile</h2>
-    <div class="card" id="profileCard">
+    <div class="card">
       <strong id="profileName">—</strong>
       <p id="profileMeta" style="margin-top:0.4rem;font-size:0.9rem;color:#94a3b8;"></p>
     </div>
     <div id="credentialBox" class="card" style="display:none;">
       <strong>Worker Credential</strong>
-      <p id="credentialText" style="margin-top:0.4rem;font-size:0.9rem;word-break:break-all;"></p>
+      <p id="credentialText" style="margin-top:0.4rem;font-size:0.85rem;word-break:break-all;color:#94a3b8;"></p>
     </div>
     <a href="#" class="btn">Premium</a>
     <button class="btn danger" onclick="logout()">Logout</button>
   </div>
-
   <nav class="bottom-nav">
     <a href="home.html"><i class="fa fa-home"></i>Home</a>
-    <a href="search.html"><i class="fa fa-search"></i>Search</a>
+    <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
     <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
-    <a href="profile.html" class="active"><i class="fa fa-user"></i>Profile</a>
+    <a href="profile.html" class="active"><i class="fa fa-user"></i>Me</a>
   </nav>
-
   <script src="../js/api.js"></script>
+  <script src="../js/shell.js"></script>
   <script>
-    const token = localStorage.getItem('reccord_token');
-    if (!token) window.location.href = 'login.html';
-
+    if (!requireAuth()) throw new Error('auth');
+    document.getElementById('headerName').textContent = getDisplayName();
     const accountType = localStorage.getItem('reccord_account_type') || '';
     const user = JSON.parse(localStorage.getItem('reccord_user') || 'null');
     const org = JSON.parse(localStorage.getItem('reccord_organisation') || 'null');
     const credential = localStorage.getItem('reccord_worker_credential');
-
     if (accountType === 'organisation' && org) {
       document.getElementById('profileName').textContent = org.display_name || org.business_name;
-      document.getElementById('profileMeta').textContent =
-        (org.phone || '') + ' • Organisation Admin';
+      document.getElementById('profileMeta').textContent = (org.phone || '') + ' • Organisation Admin';
       if (credential) {
         document.getElementById('credentialBox').style.display = 'block';
         document.getElementById('credentialText').textContent = credential;
       }
+      document.getElementById('adminSection').style.display = 'block';
+      document.getElementById('workersLink').style.display = 'block';
     } else if (user) {
       document.getElementById('profileName').textContent = user.name || user.username;
       document.getElementById('profileMeta').textContent =
-        (user.phone || '') + ' • Regular User';
-    }
-
-    function logout() {
-      clearSession();
-      window.location.href = '../index.html';
+        (user.phone || '') + ' • ' + (accountType === 'worker' ? 'Worker' : 'Regular User');
     }
   </script>
 </body>
