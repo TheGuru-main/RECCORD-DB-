@@ -1,4 +1,5 @@
-const API_BASE = "https://reccord-db-apiv1-0-0-1q.onrender.com";
+// Same origin on Render (API + frontend together)
+const API_BASE = "";
 
 async function api(path, options = {}) {
   const url = API_BASE + path;
@@ -19,7 +20,7 @@ async function api(path, options = {}) {
   try {
     res = await fetch(url, config);
   } catch (err) {
-    throw new Error("Network error: cannot reach API (" + API_BASE + ")");
+    throw new Error("Network error: cannot reach API");
   }
 
   const data = await res.json().catch(() => ({}));
