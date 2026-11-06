@@ -1,23 +1,16 @@
-// RECCORD DB API helper
 const API_BASE = "https://reccord-db-apiv1-0-0-1q.onrender.com";
 
 async function api(path, options = {}) {
   const url = API_BASE + path;
   const config = {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options
   };
-
   if (config.body && typeof config.body === "object") {
     config.body = JSON.stringify(config.body);
   }
-
   const res = await fetch(url, config);
   const data = await res.json().catch(() => ({}));
-
   if (!res.ok) {
     const message = data.detail || data.message || "Request failed";
     throw new Error(typeof message === "string" ? message : JSON.stringify(message));
@@ -25,32 +18,37 @@ async function api(path, options = {}) {
   return data;
 }
 
-const ElectionsAPI = {
-  create(payload) {
-    return api("/elections/create", { method: "POST", body: payload });
-  },
-  addCandidate(payload) {
-    return api("/elections/candidates", { method: "POST", body: payload });
-  },
-  publish(electionId) {
-    return api(`/elections/${electionId}/publish`, { method: "POST" });
-  },
-  getByCredential(credential) {
-    return api(`/elections/credential/${credential}`);
-  },
-  listCandidates(electionId) {
-    return api(`/elections/${electionId}/candidates`);
-  },
-  registerVoter(payload) {
-    return api("/elections/voters/register", { method: "POST", body: payload });
-  },
-  castVote(payload) {
-    return api("/elections/vote", { method: "POST", body: payload });
-  },
-  getResults(electionId) {
-    return api(`/elections/${electionId}/results`);
-  },
-  listHostElections(hostPhone) {
-    return api(`/elections/host/${hostPhone}`);
-  }
+const AuthAPI = {
+  regularSignup(p) { return api("/auth/regular/signup", { method: "POST", body: p }); },
+  regularLogin(p) { return api("/auth/regular/login", { method: "POST", body: p }); },
+  organisationSignup(p) { return api("/auth/organisation/signup", { method: "POST", body: p }); },
+  organisationLogin(p) { return api("/auth/organisation/login", { method: "POST", body: p }); },
+  workerRoles(p) { return api("/auth/worker/roles", { method: "POST", body: p }); },
+  workerRegister(p) { return api("/auth/worker/register", { method: "POST", body: p }); },
+  workerLogin(p) { return api("/auth/worker/login", { method: "POST", body: p }); }
 };
+
+const ElectionsAPI = {
+  create(p) { return api("/elections/create", { method: "POST", body: p }); },
+  addCandidate(p) { return api("/elections/candidates", { method: "POST", body: p }); },
+  publish(id) { return api(`/elections/${id}/publish`, { method: "POST" }); },
+  getByCredential(c) { return api(`/elections/credential/${c}`); },
+  listCandidates(id) { return api(`/elections/${id}/candidates`); },
+  registerVoter(p) { return api("/elections/voters/register", { method: "POST", body: p }); },
+  castVote(p) { return api("/elections/vote", { method: "POST", body: p }); },
+  getResults(id) { return api(`/elections/${id}/results`); },
+  listHostElections(phone) { return api(`/elections/host/${phone}`); }
+};
+
+function saveSession(data) {
+  localStorage.setItem("reccord_token", data.access_token || "");
+  localStorage.setItem("reccord_account_type", data.account_type || "");
+  if (data.user) localStorage.setItem("reccord_user", JSON.stringify(data.user));
+  if (data.organisation) localStorage.setItem("reccord_organisation", JSON.stringify(data.organisation));
+  if (data.worker) localStorage.setItem("reccord_worker", JSON.stringify(data.worker));
+  if (data.worker_credential) localStorage.setItem("reccord_worker_credential", data.worker_credential);
+}
+function clearSession() {
+  ["reccord_token","reccord_account_type","reccord_user","reccord_organisation","reccord_worker","reccord_worker_credential"]
+    .forEach(k => localStorage.removeItem(k));
+}

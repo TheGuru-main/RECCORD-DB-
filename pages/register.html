@@ -11,41 +11,142 @@
   <div class="page">
     <h2>Create Account</h2>
 
-    <label>Account Type</label>
-    <select id="accountType">
+    <label>Account Type *</label>
+    <select id="accountType" onchange="toggleFields()">
       <option value="regular">Regular User</option>
       <option value="organisation">Organisation (Admin)</option>
     </select>
 
-    <label>Full Name / Business Name</label>
-    <input type="text" placeholder="Name" />
+    <!-- Regular fields -->
+    <div id="regularFields">
+      <label>Username *</label>
+      <input type="text" id="username" placeholder="Choose a username" />
 
-    <label>Phone Number</label>
-    <input type="tel" placeholder="+234..." />
+      <label>Full Name *</label>
+      <input type="text" id="name" placeholder="Your full name" />
 
-    <label>Business / Organization Type</label>
-    <select>
-      <option value="">Select type (optional for regular)</option>
-      <option>School</option>
-      <option>Hospital / Clinic</option>
-      <option>Hotel</option>
-      <option>Restaurant / Eatery</option>
-      <option>Bar</option>
-      <option>Bakery</option>
-      <option>Retail / POS</option>
-      <option>Park / Recreation</option>
-      <option>Filling Station</option>
-      <option>Government House</option>
-      <option>Office / General Business</option>
-      <option>Personal / Individual</option>
-      <option>Other</option>
-    </select>
+      <label>Phone Number *</label>
+      <input type="tel" id="phone" placeholder="+234..." />
+    </div>
 
-    <label>Password</label>
-    <input type="password" />
+    <!-- Organisation fields -->
+    <div id="orgFields" style="display:none;">
+      <label>Business Name *</label>
+      <input type="text" id="businessName" placeholder="Official business name" />
 
-    <a href="home.html" class="btn primary">Create Account</a>
+      <label>Display Name *</label>
+      <input type="text" id="displayName" placeholder="Name shown in app" />
+
+      <label>Country (2-letter code) *</label>
+      <input type="text" id="country" placeholder="NG" maxlength="2" value="NG" />
+
+      <label>Phone Number *</label>
+      <input type="tel" id="orgPhone" placeholder="+234..." />
+
+      <label>Organization Type</label>
+      <select id="orgType">
+        <option value="">Select type</option>
+        <option>School</option>
+        <option>Hospital / Clinic</option>
+        <option>Hotel</option>
+        <option>Restaurant / Eatery</option>
+        <option>Bar</option>
+        <option>Bakery</option>
+        <option>Retail / POS</option>
+        <option>Park / Recreation</option>
+        <option>Filling Station</option>
+        <option>Government House</option>
+        <option>Office / General Business</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <label>Password *</label>
+    <input type="password" id="password" placeholder="Create a password" />
+
+    <button class="btn primary" id="submitBtn" onclick="register()">Create Account</button>
     <a href="login.html" class="btn">Already have an account?</a>
+    <p id="error" style="color:#f87171;margin-top:1rem;"></p>
+    <p id="success" style="color:#4ade80;margin-top:1rem;"></p>
   </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    function toggleFields() {
+      const type = document.getElementById('accountType').value;
+      document.getElementById('regularFields').style.display = type === 'regular' ? 'block' : 'none';
+      document.getElementById('orgFields').style.display = type === 'organisation' ? 'block' : 'none';
+    }
+
+    async function register() {
+      const type = document.getElementById('accountType').value;
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('error');
+      const successEl = document.getElementById('success');
+      const btn = document.getElementById('submitBtn');
+
+      errorEl.textContent = '';
+      successEl.textContent = '';
+
+      if (!password) {
+        errorEl.textContent = 'Password is required';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      try {
+        let data;
+
+        if (type === 'regular') {
+          const username = document.getElementById('username').value.trim();
+          const name = document.getElementById('name').value.trim();
+          const phone = document.getElementById('phone').value.trim();
+
+          if (!username || !name || !phone) {
+            throw new Error('Username, name and phone are required');
+          }
+
+          data = await AuthAPI.regularSignup({ username, name, phone, password });
+        } else {
+          const business_name = document.getElementById('businessName').value.trim();
+          const display_name = document.getElementById('displayName').value.trim();
+          const country = document.getElementById('country').value.trim().toUpperCase() || 'NG';
+          const phone = document.getElementById('orgPhone').value.trim();
+          const orgType = document.getElementById('orgType').value;
+
+          if (!business_name || !display_name || !phone) {
+            throw new Error('Business name, display name and phone are required');
+          }
+
+          data = await AuthAPI.organisationSignup({
+            business_name,
+            display_name,
+            country,
+            phone,
+            language: 'en',
+            password
+          });
+
+          // Store org type client-side for now
+          if (orgType) localStorage.setItem('reccord_org_type', orgType);
+        }
+
+        saveSession(data);
+
+        if (data.worker_credential) {
+          successEl.textContent = 'Account created. Worker Credential: ' + data.worker_credential;
+          setTimeout(() => { window.location.href = 'home.html'; }, 2500);
+        } else {
+          window.location.href = 'home.html';
+        }
+      } catch (err) {
+        errorEl.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+  </script>
 </body>
 </html>

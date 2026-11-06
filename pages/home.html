@@ -7,75 +7,77 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="../css/style.css" />
   <style>
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-    }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
     .stat-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 0.9rem;
-      text-align: center;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 0.9rem; text-align: center;
     }
-    .stat-card strong {
-      display: block;
-      font-size: 1.3rem;
-      color: #60a5fa;
-    }
-    .stat-card span {
-      font-size: 0.8rem;
-      color: #94a3b8;
-    }
+    .stat-card strong { display: block; font-size: 1.25rem; color: #60a5fa; }
+    .stat-card span { font-size: 0.8rem; color: #94a3b8; }
     .section-title {
-      font-size: 0.95rem;
-      color: #94a3b8;
-      margin: 1.25rem 0 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      font-size: 0.85rem; color: #94a3b8; margin: 1.1rem 0 0.45rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
     }
   </style>
 </head>
 <body>
+  <header class="app-header">
+    <button class="menu-btn" onclick="openDrawer()"><i class="fa fa-bars"></i></button>
+    <span class="title">Workspace</span>
+    <span class="user-label" id="headerName">—</span>
+  </header>
+
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="side-drawer" id="sideDrawer">
+    <div class="drawer-section">Menu</div>
+    <a href="home.html" class="active">Workspace</a>
+    <a href="lookup.html">Lookup</a>
+    <a href="messages.html">Messages</a>
+    <a href="records.html">Records</a>
+    <a href="profile.html">Profile</a>
+    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
+    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
+    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+  </aside>
+
   <div class="page">
-    <h2>Workspace</h2>
-    <p id="welcomeText">Welcome back</p>
-
+    <p id="welcomeText" style="margin-bottom:1rem;">Welcome</p>
     <div class="stats">
-      <div class="stat-card">
-        <strong>0</strong>
-        <span>My Commits</span>
-      </div>
-      <div class="stat-card">
-        <strong>—</strong>
-        <span>Role</span>
-      </div>
+      <div class="stat-card"><strong id="commitCount">0</strong><span>Commits</span></div>
+      <div class="stat-card"><strong id="roleLabel">—</strong><span>Account</span></div>
     </div>
-
-    <div class="section-title">Grid (54 × 64)</div>
-    <div class="grid-box">
-      GSP Grid • Placements appear here
-    </div>
-
+    <div class="section-title">Placement Grid (this tenant)</div>
+    <div class="grid-box">Per-tenant GSP grid • 54×64</div>
     <div class="section-title">Recent Activity</div>
     <div class="card">
-      <p style="margin:0;font-size:0.9rem;color:#94a3b8;">No recent commits yet. Tap + to create your first record.</p>
+      <p style="margin:0;font-size:0.9rem;color:#94a3b8;">No recent commits yet.</p>
     </div>
   </div>
 
-  <!-- Floating Commit Button -->
-  <a href="commit.html" class="fab" title="New Commit">
-    <i class="fa fa-plus"></i>
-  </a>
+  <a href="commit.html" class="fab"><i class="fa fa-plus"></i></a>
 
-  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <a href="home.html" class="active"><i class="fa fa-home"></i>Home</a>
-    <a href="search.html"><i class="fa fa-search"></i>Search</a>
+    <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
     <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
-    <a href="profile.html"><i class="fa fa-user"></i>Profile</a>
+    <a href="profile.html"><i class="fa fa-user"></i>Me</a>
   </nav>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error('auth');
+    const name = getDisplayName();
+    document.getElementById('headerName').textContent = name;
+    document.getElementById('welcomeText').textContent = 'Welcome, ' + name;
+    const type = localStorage.getItem('reccord_account_type') || '';
+    document.getElementById('roleLabel').textContent =
+      type === 'organisation' ? 'Admin' : type === 'worker' ? 'Worker' : 'Regular';
+    if (isAdmin()) {
+      document.getElementById('adminSection').style.display = 'block';
+      document.getElementById('workersLink').style.display = 'block';
+    }
+  </script>
 </body>
 </html>

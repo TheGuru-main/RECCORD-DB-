@@ -8,19 +8,69 @@
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
-  <div class="page">
+  <div class="page" style="padding-top:1.5rem;">
     <h2>Login</h2>
     <p>Access your RECCORD account</p>
 
-    <label>Phone Number</label>
-    <input type="tel" placeholder="+234..." />
+    <label>Account Type</label>
+    <select id="accountType" onchange="toggleFields()">
+      <option value="regular">Regular User</option>
+      <option value="organisation">Organisation (Admin)</option>
+    </select>
 
-    <label>Password</label>
-    <input type="password" placeholder="Your password" />
+    <div id="regularFields">
+      <label>Username *</label>
+      <input type="text" id="username" placeholder="Your username" />
+    </div>
+    <div id="orgFields" style="display:none;">
+      <label>Phone Number *</label>
+      <input type="tel" id="phone" placeholder="+234..." />
+    </div>
 
-    <a href="home.html" class="btn primary">Login</a>
+    <label>Password *</label>
+    <input type="password" id="password" />
+
+    <button class="btn primary" id="loginBtn" onclick="login()">Login</button>
     <a href="register.html" class="btn">Create Account</a>
+    <a href="worker-join.html" class="btn secondary">Join as Worker</a>
+    <a href="worker-login.html" class="btn">Worker Login</a>
     <a href="../index.html" class="btn">← Back</a>
+    <p id="error" style="color:#f87171;"></p>
   </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    function toggleFields() {
+      const type = document.getElementById('accountType').value;
+      document.getElementById('regularFields').style.display = type === 'regular' ? 'block' : 'none';
+      document.getElementById('orgFields').style.display = type === 'organisation' ? 'block' : 'none';
+    }
+    async function login() {
+      const type = document.getElementById('accountType').value;
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('error');
+      const btn = document.getElementById('loginBtn');
+      errorEl.textContent = '';
+      if (!password) { errorEl.textContent = 'Password is required'; return; }
+      btn.disabled = true; btn.textContent = 'Logging in...';
+      try {
+        let data;
+        if (type === 'regular') {
+          const username = document.getElementById('username').value.trim();
+          if (!username) throw new Error('Username is required');
+          data = await AuthAPI.regularLogin({ username, password });
+        } else {
+          const phone = document.getElementById('phone').value.trim();
+          if (!phone) throw new Error('Phone is required');
+          data = await AuthAPI.organisationLogin({ phone, password });
+        }
+        saveSession(data);
+        window.location.href = 'home.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        btn.disabled = false; btn.textContent = 'Login';
+      }
+    }
+  </script>
 </body>
 </html>

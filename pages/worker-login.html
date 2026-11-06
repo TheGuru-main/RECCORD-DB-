@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Worker Login — RECCORD DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="page" style="padding-top:1.5rem;">
+    <h2>Worker Login</h2>
+    <p>Only approved workers can sign in.</p>
+
+    <label>Phone Number *</label>
+    <input type="tel" id="phone" placeholder="+234..." />
+    <label>Password *</label>
+    <input type="password" id="password" />
+
+    <button class="btn primary" id="loginBtn" onclick="login()">Login</button>
+    <a href="worker-join.html" class="btn">Join with Credential</a>
+    <a href="login.html" class="btn">← Main Login</a>
+    <p id="error" style="color:#f87171;"></p>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function login() {
+      const phone = document.getElementById('phone').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('error');
+      const btn = document.getElementById('loginBtn');
+      errorEl.textContent = '';
+      if (!phone || !password) { errorEl.textContent = 'Phone and password required'; return; }
+      btn.disabled = true; btn.textContent = 'Logging in...';
+      try {
+        const data = await AuthAPI.workerLogin({ worker_phone: phone, worker_password: password });
+        saveSession(data);
+        window.location.href = 'home.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        btn.disabled = false; btn.textContent = 'Login';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lookup — RECCORD DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <button class="menu-btn" onclick="openDrawer()"><i class="fa fa-bars"></i></button>
+    <span class="title">Lookup</span>
+    <span class="user-label" id="headerName"></span>
+  </header>
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="side-drawer" id="sideDrawer">
+    <div class="drawer-section">Menu</div>
+    <a href="home.html">Workspace</a>
+    <a href="lookup.html" class="active">Lookup</a>
+    <a href="messages.html">Messages</a>
+    <a href="records.html">Records</a>
+    <a href="profile.html">Profile</a>
+    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+  </aside>
+  <div class="page">
+    <label>Search by name</label>
+    <input type="search" id="q" placeholder="Object or commit name..." />
+    <p style="font-size:0.9rem;">Results are scoped to your permission (own / org).</p>
+    <div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">Lookup will query your tenant only.</p></div>
+  </div>
+  <nav class="bottom-nav">
+    <a href="home.html"><i class="fa fa-home"></i>Home</a>
+    <a href="lookup.html" class="active"><i class="fa fa-search"></i>Lookup</a>
+    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
+    <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="profile.html"><i class="fa fa-user"></i>Me</a>
+  </nav>
+  <script src="../js/api.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error('auth');
+    document.getElementById('headerName').textContent = getDisplayName();
+  </script>
+</body>
+</html>
