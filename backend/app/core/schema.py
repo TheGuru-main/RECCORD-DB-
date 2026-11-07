@@ -21,6 +21,12 @@ from app.models.user_version import UserVersion
 from app.models.worker import Worker
 from app.models.worker_version import WorkerVersion
 
+# E-Voting tables
+from app.models.election import Election  # noqa: F401
+from app.models.candidate import Candidate  # noqa: F401
+from app.models.election_voter import ElectionVoter  # noqa: F401
+from app.models.vote import Vote  # noqa: F401
+
 
 def initialize_schema() -> None:
     """Create all missing RECCORD DB tables in the configured database."""

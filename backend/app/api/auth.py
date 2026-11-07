@@ -141,7 +141,8 @@ def safe_placement(placement) -> dict:
 
     return {
         "account_type": placement.account_type,
-        "account_id": placement.account_id,
+        "account_uid": getattr(placement, "account_uid", None)
+        or getattr(placement, "account_id", None),
         "normalized_name": placement.normalized_name,
         "key": placement.key,
     }
