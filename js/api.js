@@ -93,7 +93,9 @@ const ElectionsAPI = {
   registerVoter(p) { return api("/elections/voters/register", { method: "POST", body: p }); },
   castVote(p) { return api("/elections/vote", { method: "POST", body: p }); },
   getResults(id) { return api("/elections/" + id + "/results"); },
-  listHostElections(phone) { return api("/elections/host/" + encodeURIComponent(phone)); }
+  listHostElections(phone) { return api("/elections/host/" + encodeURIComponent(phone)); },
+  listVoters(electionId) { return api("/elections/" + electionId + "/voters"); },
+  getVoter(voterId) { return api("/elections/voters/" + voterId); }
 };
 
 function saveSession(data) {

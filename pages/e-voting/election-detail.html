@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Election detail — E-Voting</title>
   <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .vgrid {
+      display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px;
+      padding: 8px; border-radius: 12px; background: rgba(10,4,8,0.65);
+      border: 1px solid rgba(196,164,132,0.35); margin-bottom: 1rem;
+    }
+    .vgrid button {
+      aspect-ratio: 1; border: none; border-radius: 4px;
+      background: rgba(75,20,40,0.45); padding: 0;
+    }
+    .vgrid button.on {
+      cursor: pointer;
+      background: linear-gradient(135deg, #22d3ee, #a3e635);
+      box-shadow: 0 0 8px rgba(34,211,238,0.4);
+    }
+    .vgrid button.voted {
+      background: linear-gradient(135deg, #fbbf24, #ef4444);
+    }
+  </style>
 </head>
 <body>
   <div class="page">
@@ -12,15 +31,21 @@
     <h2 id="title">Election</h2>
     <div class="card">
       <p style="margin:0;font-size:0.9rem;" id="meta">—</p>
-      <p style="margin:0.5rem 0 0;word-break:break-all;color:var(--clay);" id="cred">—</p>
-      <button class="btn clay" style="margin-top:0.75rem;" type="button" onclick="copyCred()">Copy Election ID</button>
+      <p style="margin:0.5rem 0 0;word-break:break-all;color:var(--clay);" id="cred"></p>
+      <button class="btn clay" type="button" onclick="copyCred()">Copy Election ID</button>
     </div>
 
-    <h3 style="font-size:1rem;">Candidates</h3>
-    <div id="cands"><p style="opacity:0.8;">Loading…</p></div>
+    <h3 style="font-size:1rem;">Voter placement grid</h3>
+    <div class="vgrid" id="vgrid"></div>
 
-    <h3 style="font-size:1rem;margin-top:1rem;">Results</h3>
-    <div id="results"><p style="opacity:0.8;">—</p></div>
+    <h3 style="font-size:1rem;">Voters</h3>
+    <div id="voters"></div>
+
+    <h3 style="font-size:1rem;">Candidates</h3>
+    <div id="cands"></div>
+
+    <h3 style="font-size:1rem;">Results</h3>
+    <div id="results"></div>
     <p class="err" id="error"></p>
   </div>
   <script src="/js/api.js"></script>
@@ -28,12 +53,40 @@
     const electionId = sessionStorage.getItem("detail_election_id");
     const credential = sessionStorage.getItem("detail_election_credential") || "";
     document.getElementById("cred").textContent = credential ? "ID: " + credential : "";
+    window.__voters = [];
 
     function copyCred() {
       if (credential) navigator.clipboard.writeText(credential).catch(function () {});
     }
     function escapeHtml(s) {
       return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    function paintVoterGrid(voters) {
+      const el = document.getElementById("vgrid");
+      const n = 80;
+      let html = "";
+      for (let i = 0; i < n; i++) {
+        const v = voters[i];
+        if (v) {
+          html += '<button type="button" class="on' + (v.has_voted ? " voted" : "") +
+            '" title="' + escapeHtml(v.full_name) +
+            '" onclick="openVoter(\'' + escapeHtml(v.id) + '\')"></button>';
+        } else {
+          html += '<button type="button" disabled></button>';
+        }
+      }
+      el.innerHTML = html;
+    }
+
+    function openVoter(id) {
+      sessionStorage.setItem("detail_voter_id", id);
+      window.location.href = "/pages/e-voting/voter-detail.html";
+    }
+    function openCand(id) {
+      sessionStorage.setItem("detail_candidate_id", id);
+      sessionStorage.setItem("detail_candidate_election_id", electionId);
+      window.location.href = "/pages/e-voting/candidate-detail.html";
     }
 
     async function load() {
@@ -48,37 +101,51 @@
           document.getElementById("meta").textContent =
             (el.status || "") + " · " + (el.election_type || "") + " · " + (el.level || "");
         }
-        const data = await ElectionsAPI.listCandidates(electionId);
-        const list = data.candidates || [];
-        const box = document.getElementById("cands");
-        if (!list.length) {
-          box.innerHTML = '<div class="card"><p style="margin:0;">No candidates</p></div>';
-        } else {
-          box.innerHTML = list.map(function (c) {
-            return (
-              '<div class="card" style="cursor:pointer;" onclick="openCand(\'' + escapeHtml(c.id) + '\')">' +
-              "<strong>" + escapeHtml(c.name) + "</strong>" +
-              '<p style="margin:0.3rem 0 0;font-size:0.85rem;opacity:0.85;">' +
-              escapeHtml(c.party || "") + "</p></div>"
-            );
-          }).join("");
-        }
-        try {
-          const res = await ElectionsAPI.getResults(electionId);
-          const rows = res.results || res || [];
-          const rbox = document.getElementById("results");
-          if (Array.isArray(rows) && rows.length) {
-            rbox.innerHTML = rows.map(function (r, i) {
+
+        const vdata = await ElectionsAPI.listVoters(electionId);
+        const voters = vdata.voters || [];
+        window.__voters = voters;
+        paintVoterGrid(voters);
+        document.getElementById("voters").innerHTML = voters.length
+          ? voters.map(function (v) {
               return (
-                '<div class="card"><strong>#' + (i + 1) + " " + escapeHtml(r.name || r.candidate_name || "") +
-                "</strong><p style=\"margin:0.3rem 0 0;font-size:0.85rem;\">Votes: " +
-                escapeHtml(String(r.votes != null ? r.votes : r.count != null ? r.count : "—")) +
+                '<div class="card" style="cursor:pointer;" onclick="openVoter(\'' + escapeHtml(v.id) + '\')">' +
+                "<strong>" + escapeHtml(v.full_name) + "</strong>" +
+                '<p style="margin:0.3rem 0 0;font-size:0.85rem;opacity:0.85;">' +
+                (v.has_voted ? "Voted" : "Registered") +
+                [v.country, v.lga].filter(Boolean).map(function (x) { return " · " + escapeHtml(x); }).join("") +
                 "</p></div>"
               );
-            }).join("");
-          } else {
-            rbox.innerHTML = '<div class="card"><p style="margin:0;opacity:0.85;">No results yet</p></div>';
-          }
+            }).join("")
+          : '<div class="card"><p style="margin:0;opacity:0.85;">No voters yet</p></div>';
+
+        const data = await ElectionsAPI.listCandidates(electionId);
+        const list = data.candidates || [];
+        document.getElementById("cands").innerHTML = list.length
+          ? list.map(function (c) {
+              return (
+                '<div class="card" style="cursor:pointer;" onclick="openCand(\'' + escapeHtml(c.id) + '\')">' +
+                "<strong>" + escapeHtml(c.name) + "</strong>" +
+                '<p style="margin:0.3rem 0 0;font-size:0.85rem;opacity:0.85;">' +
+                escapeHtml(c.party || "") +
+                [c.country, c.lga].filter(Boolean).map(function (x) { return " · " + escapeHtml(x); }).join("") +
+                "</p></div>"
+              );
+            }).join("")
+          : '<div class="card"><p style="margin:0;">No candidates</p></div>';
+
+        try {
+          const res = await ElectionsAPI.getResults(electionId);
+          const rows = res.results || [];
+          document.getElementById("results").innerHTML = rows.length
+            ? rows.map(function (r, i) {
+                return (
+                  '<div class="card"><strong>#' + (i + 1) + " " + escapeHtml(r.name) +
+                  "</strong><p style=\"margin:0.3rem 0 0;font-size:0.85rem;\">Votes: " +
+                  escapeHtml(String(r.votes)) + "</p></div>"
+                );
+              }).join("")
+            : '<div class="card"><p style="margin:0;opacity:0.85;">No results yet</p></div>';
         } catch (e2) {
           document.getElementById("results").innerHTML =
             '<div class="card"><p style="margin:0;opacity:0.85;">Results unavailable</p></div>';
@@ -87,13 +154,6 @@
         document.getElementById("error").textContent = e.message;
       }
     }
-
-    function openCand(id) {
-      sessionStorage.setItem("detail_candidate_id", id);
-      sessionStorage.setItem("detail_candidate_election_id", electionId);
-      window.location.href = "/pages/e-voting/candidate-detail.html";
-    }
-
     load();
   </script>
 </body>

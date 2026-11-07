@@ -3,72 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Voter Signup</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Voter signup — E-Voting</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div class="page">
-    <h2>Voter Signup</h2>
-    <p>Enter the Election ID given to you by the Host</p>
-
+    <a class="back-link" href="/pages/e-voting/type.html">← Back</a>
+    <h2>Voter signup</h2>
     <label>Election ID *</label>
-    <input type="text" id="electionCredential" placeholder="Election credential" />
-
-    <label>Full Name *</label>
-    <input type="text" id="voterName" placeholder="Your full name" />
-
-    <label>Phone Number *</label>
-    <input type="tel" id="voterPhone" placeholder="+234..." />
-
+    <input id="credential" />
+    <label>Full name *</label>
+    <input id="fullName" />
+    <label>Phone *</label>
+    <input id="phone" type="tel" placeholder="+234…" />
     <label>School ID or National ID *</label>
-    <input type="text" id="voterIdentity" placeholder="ID number" />
-
-    <button class="btn primary" id="continueBtn" onclick="register()">Continue to Vote</button>
-    <a href="type.html" class="btn">← Back</a>
-    <p id="error" style="color:#f87171;margin-top:1rem;"></p>
+    <input id="identity" />
+    <label>Country *</label>
+    <input id="country" value="NG" />
+    <label>State</label>
+    <input id="state" />
+    <label>LGA *</label>
+    <input id="lga" />
+    <button class="btn primary" id="btn" onclick="reg()">Continue to vote</button>
+    <p class="err" id="error"></p>
   </div>
-
-  <script src="../../js/api.js"></script>
+  <script src="/js/api.js"></script>
   <script>
-    async function register() {
-      const credential = document.getElementById('electionCredential').value.trim();
-      const full_name = document.getElementById('voterName').value.trim();
-      const phone = document.getElementById('voterPhone').value.trim();
-      const identity_number = document.getElementById('voterIdentity').value.trim();
-      const errorEl = document.getElementById('error');
-      const btn = document.getElementById('continueBtn');
-
-      if (!credential || !full_name || !phone || !identity_number) {
-        errorEl.textContent = "All fields are required";
+    async function reg() {
+      const election_credential = document.getElementById("credential").value.trim();
+      const full_name = document.getElementById("fullName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const identity_number = document.getElementById("identity").value.trim();
+      const country = document.getElementById("country").value.trim();
+      const state = document.getElementById("state").value.trim();
+      const lga = document.getElementById("lga").value.trim();
+      const err = document.getElementById("error");
+      const btn = document.getElementById("btn");
+      if (!election_credential || !full_name || !phone || !identity_number || !country || !lga) {
+        err.textContent = "Fill required fields";
         return;
       }
-
       btn.disabled = true;
-      btn.textContent = "Registering...";
-      errorEl.textContent = "";
-
       try {
-        // First verify election exists
-        const election = await ElectionsAPI.getByCredential(credential);
-        sessionStorage.setItem('votingElectionId', election.id);
-        sessionStorage.setItem('votingElectionTitle', election.title);
-
-        const voter = await ElectionsAPI.registerVoter({
-          election_credential: credential,
-          full_name,
-          phone,
-          identity_number
+        const data = await ElectionsAPI.registerVoter({
+          election_credential, full_name, phone, identity_number,
+          country, state: state || null, lga
         });
-
-        sessionStorage.setItem('voterId', voter.voter_id);
-        sessionStorage.setItem('voterName', full_name);
-
-        window.location.href = "voting.html";
-      } catch (err) {
-        errorEl.textContent = err.message;
+        sessionStorage.setItem("voterId", data.voter_id);
+        sessionStorage.setItem("electionCredential", election_credential);
+        window.location.href = "/pages/e-voting/voting.html";
+      } catch (e) {
+        err.textContent = e.message;
         btn.disabled = false;
-        btn.textContent = "Continue to Vote";
       }
     }
   </script>

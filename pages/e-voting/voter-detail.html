@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voter detail — E-Voting</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <a class="back-link" href="javascript:history.back()">← Back</a>
+    <h2 id="name">Voter</h2>
+    <div class="card" id="body"><p style="margin:0;">Loading…</p></div>
+    <p class="err" id="error"></p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+    async function load() {
+      const id = sessionStorage.getItem("detail_voter_id");
+      if (!id) {
+        document.getElementById("error").textContent = "No voter selected";
+        return;
+      }
+      try {
+        const v = await ElectionsAPI.getVoter(id);
+        document.getElementById("name").textContent = v.full_name || "Voter";
+        const rows = [
+          ["Phone", v.phone],
+          ["Identity", v.identity_number],
+          ["Country", v.country],
+          ["State", v.state],
+          ["LGA", v.lga],
+          ["Voted", v.has_voted ? "Yes" : "No"],
+          ["Registered", v.created_at]
+        ];
+        document.getElementById("body").innerHTML = rows
+          .filter(function (r) { return r[1] != null && r[1] !== ""; })
+          .map(function (r) {
+            return "<p style=\"margin:0 0 0.5rem;\"><span style=\"opacity:0.7;\">" +
+              escapeHtml(r[0]) + ":</span> " + escapeHtml(r[1]) + "</p>";
+          }).join("");
+      } catch (e) {
+        document.getElementById("error").textContent = e.message;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

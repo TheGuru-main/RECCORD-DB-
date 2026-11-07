@@ -117,3 +117,32 @@ def get_narration_endpoint(
         )
 
     return record
+
+
+@router.get("/by-object/{object_id}")
+def list_narrations_for_object(
+    object_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    principal: AuthenticatedPrincipal = Depends(get_current_principal),
+):
+    from sqlalchemy import select
+    from app.models.narration import Narration
+
+    owner_user_id, organisation_id = _require_account_context(principal)
+    stmt = select(Narration).where(Narration.object_id == object_id)
+    if owner_user_id is not None:
+        stmt = stmt.where(Narration.owner_user_id == owner_user_id)
+    else:
+        stmt = stmt.where(Narration.organisation_id == organisation_id)
+    rows = list(db.scalars(stmt))
+    return {
+        "narrations": [
+            {
+                "id": str(n.id),
+                "object_id": str(n.object_id),
+                "content": n.content,
+                "created_at": str(n.created_at) if n.created_at else None,
+            }
+            for n in rows
+        ]
+    }

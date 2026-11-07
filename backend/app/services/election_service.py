@@ -64,10 +64,11 @@ def add_candidate(
     details: str | None = None,
     image_url: str | None = None,
     position: int = 0,
+    country: str | None = None,
+    state: str | None = None,
+    lga: str | None = None,
 ) -> Candidate:
-    election = db.scalar(
-        select(Election).where(Election.id == election_id)
-    )
+    election = db.scalar(select(Election).where(Election.id == election_id))
     if election is None:
         raise ValueError("election not found")
 
@@ -77,6 +78,9 @@ def add_candidate(
         party=party,
         details=details,
         image_url=image_url,
+        country=country,
+        state=state,
+        lga=lga,
         position=position,
     )
     db.add(candidate)
@@ -97,14 +101,10 @@ def publish_election(db: Session, *, election_id: str) -> Election:
 
 
 def get_election_by_credential(db: Session, *, election_id: str) -> Election | None:
-    return db.scalar(
-        select(Election).where(Election.election_id == election_id)
-    )
+    return db.scalar(select(Election).where(Election.election_id == election_id))
 
 
 def list_host_elections(db: Session, *, host_phone: str) -> list[Election]:
     return list(
-        db.scalars(
-            select(Election).where(Election.host_phone == host_phone)
-        )
+        db.scalars(select(Election).where(Election.host_phone == host_phone))
     )

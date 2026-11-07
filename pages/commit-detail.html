@@ -10,7 +10,11 @@
   <div class="page">
     <a class="back-link" href="/pages/home.html">← Back</a>
     <h2 id="title">Placement</h2>
-    <div class="card" id="body"><p style="margin:0;">Loading…</p></div>
+    <div class="card" id="meta"></div>
+    <h3 style="font-size:1rem;">Narration</h3>
+    <div id="narr" class="card"><p style="margin:0;opacity:0.85;">—</p></div>
+    <h3 style="font-size:1rem;">Media</h3>
+    <div class="card"><p style="margin:0;opacity:0.85;">Media upload to B2 tenant path — next media pipeline batch.</p></div>
     <p class="err" id="error"></p>
   </div>
   <script src="/js/api.js"></script>
@@ -23,26 +27,41 @@
       try { p = JSON.parse(sessionStorage.getItem("detail_placement") || "{}"); } catch (e) {}
       const oid = p.object_id || sessionStorage.getItem("detail_object_id");
       document.getElementById("title").textContent = p.object_name || "Placement";
-      let lines = [
+      const lines = [
         ["Name", p.object_name],
         ["Time", p.created_at ? new Date(p.created_at).toLocaleString() : ""],
-        ["GSP key", p.gsp_key],
-        ["Placement ID", p.placement_id],
-        ["Object ID", oid]
+        ["GSP", p.gsp_key],
+        ["Object", oid]
       ];
       if (oid) {
         try {
           const obj = await ObjectsAPI.get(oid);
-          lines.push(["Status", obj.status]);
           if (obj.name) document.getElementById("title").textContent = obj.name;
-        } catch (e) { /* optional */ }
+          lines.push(["Status", obj.status]);
+        } catch (e) {}
+        try {
+          if (typeof NarrationsAPI.byObject === "function") {
+            const n = await NarrationsAPI.byObject(oid);
+            const list = n.narrations || [];
+            document.getElementById("narr").innerHTML = list.length
+              ? list.map(function (x) {
+                  return "<p style=\"margin:0 0 0.5rem;\">" + escapeHtml(x.content) +
+                    "</p><p style=\"margin:0;font-size:0.8rem;opacity:0.7;\">" +
+                    escapeHtml(x.created_at || "") + "</p>";
+                }).join("<hr style=\"border-color:rgba(196,164,132,0.2);margin:0.75rem 0;\" />")
+              : "<p style=\"margin:0;opacity:0.85;\">No narration</p>";
+          }
+        } catch (e) {
+          document.getElementById("narr").innerHTML =
+            "<p style=\"margin:0;opacity:0.85;\">Narration unavailable</p>";
+        }
       }
-      document.getElementById("body").innerHTML = lines
+      document.getElementById("meta").innerHTML = lines
         .filter(function (r) { return r[1]; })
         .map(function (r) {
-          return "<p style=\"margin:0 0 0.5rem;\"><span style=\"opacity:0.7;\">" +
+          return "<p style=\"margin:0 0 0.45rem;\"><span style=\"opacity:0.7;\">" +
             escapeHtml(r[0]) + ":</span> " + escapeHtml(r[1]) + "</p>";
-        }).join("") || "<p style=\"margin:0;\">No detail</p>";
+        }).join("");
     }
     load();
   </script>
