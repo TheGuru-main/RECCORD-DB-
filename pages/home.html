@@ -5,36 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Workspace — RECCORD DB</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <style>
     .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
     .stat-card {
-      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-      padding: 0.9rem; text-align: center;
+      background: rgba(26,10,12,0.55); border: 1px solid rgba(196,164,132,0.35);
+      border-radius: 14px; padding: 0.9rem; text-align: center;
     }
-    .stat-card strong { display: block; font-size: 1.25rem; color: #60a5fa; }
-    .stat-card span { font-size: 0.8rem; color: #94a3b8; }
+    .stat-card strong { display: block; font-size: 1.25rem; color: #fbbf24; }
+    .stat-card span { font-size: 0.8rem; opacity: 0.85; }
     .section-title {
-      font-size: 0.85rem; color: #94a3b8; margin: 1.1rem 0 0.45rem;
+      font-size: 0.85rem; opacity: 0.85; margin: 1.1rem 0 0.45rem;
       text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .mini-grid {
+    .vibrant-grid {
       display: grid;
-      grid-template-columns: repeat(16, 1fr);
-      gap: 2px;
-      background: #0f172a;
-      padding: 6px;
-      border-radius: 10px;
-      border: 1px solid #334155;
-      max-height: 180px;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 3px;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(196,164,132,0.35);
+      background: rgba(10, 4, 8, 0.65);
+      max-height: 220px;
       overflow: hidden;
     }
-    .mini-grid span {
+    .vibrant-grid button {
       aspect-ratio: 1;
-      background: #1e293b;
-      border-radius: 2px;
+      border: none;
+      border-radius: 4px;
+      padding: 0;
+      cursor: default;
+      background: rgba(75, 20, 40, 0.5);
     }
-    .mini-grid span.on { background: #2563eb; }
+    .vibrant-grid button.filled {
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+    }
+    .vibrant-grid button.c0 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+    .vibrant-grid button.c1 { background: linear-gradient(135deg, #22d3ee, #6366f1); }
+    .vibrant-grid button.c2 { background: linear-gradient(135deg, #a3e635, #14b8a6); }
+    .vibrant-grid button.c3 { background: linear-gradient(135deg, #e879f9, #f43f5e); }
+    .vibrant-grid button.c4 { background: linear-gradient(135deg, #fbbf24, #c4a484); }
   </style>
 </head>
 <body>
@@ -43,103 +54,112 @@
     <span class="title">Workspace</span>
     <span class="user-label" id="headerName">—</span>
   </header>
-
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
   <aside class="side-drawer" id="sideDrawer">
-    <div class="drawer-section">Menu</div>
-    <a href="home.html" class="active">Workspace</a>
-    <a href="lookup.html">Lookup</a>
-    <a href="messages.html">Messages</a>
-    <a href="records.html">Records</a>
-    <a href="profile.html">Profile</a>
-    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
-    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
-    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+    <a href="/pages/home.html" class="active">Workspace</a>
+    <a href="/pages/lookup.html">Lookup</a>
+    <a href="/pages/messages.html">Messages</a>
+    <a href="/pages/records.html">Records</a>
+    <a href="/pages/profile.html">Profile</a>
+    <a href="#" onclick="logout()" style="color:#fecaca;">Logout</a>
   </aside>
 
-  <div class="page">
-    <p id="welcomeText" style="margin-bottom:1rem;">Welcome</p>
+  <div class="page with-chrome">
+    <p id="welcomeText">Welcome</p>
     <div class="stats">
       <div class="stat-card"><strong id="commitCount">0</strong><span>Placements</span></div>
       <div class="stat-card"><strong id="roleLabel">—</strong><span>Account</span></div>
     </div>
 
-    <div class="section-title">Placement Grid (tenant / B2)</div>
-    <div class="mini-grid" id="miniGrid"></div>
-    <p id="gridMeta" style="font-size:0.8rem;color:#64748b;margin-top:0.4rem;">Loading grid…</p>
+    <div class="section-title">Tenant placement grid</div>
+    <div class="vibrant-grid" id="grid"></div>
+    <p id="gridMeta" style="font-size:0.8rem;opacity:0.75;margin-top:0.4rem;">Loading grid…</p>
 
     <div class="section-title">Recent placements</div>
-    <div id="recentList">
-      <div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">Loading…</p></div>
-    </div>
+    <div id="recentList"></div>
+    <p class="err" id="error"></p>
   </div>
 
-  <a href="commit.html" class="fab"><i class="fa fa-plus"></i></a>
-
+  <a href="/pages/commit.html" class="fab"><i class="fa fa-plus"></i></a>
   <nav class="bottom-nav">
-    <a href="home.html" class="active"><i class="fa fa-home"></i>Home</a>
-    <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
-    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
-    <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
-    <a href="profile.html"><i class="fa fa-user"></i>Me</a>
+    <a href="/pages/home.html" class="active"><i class="fa fa-home"></i>Home</a>
+    <a href="/pages/lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="/pages/messages.html"><i class="fa fa-comments"></i>Messages</a>
+    <a href="/pages/records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="/pages/profile.html"><i class="fa fa-user"></i>Me</a>
   </nav>
 
-  <script src="../js/api.js"></script>
-  <script src="../js/shell.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/shell.js"></script>
   <script>
-    if (!requireAuth()) throw new Error('auth');
-    const name = getDisplayName();
-    document.getElementById('headerName').textContent = name;
-    document.getElementById('welcomeText').textContent = 'Welcome, ' + name;
-    const type = localStorage.getItem('reccord_account_type') || '';
-    document.getElementById('roleLabel').textContent =
-      type === 'organisation' ? 'Admin' : type === 'worker' ? 'Worker' : 'Regular';
-    if (isAdmin()) {
-      document.getElementById('adminSection').style.display = 'block';
-      document.getElementById('workersLink').style.display = 'block';
+    if (typeof requireAuth === "function" && !requireAuth()) throw new Error("auth");
+    const name = typeof getDisplayName === "function" ? getDisplayName() : "User";
+    document.getElementById("headerName").textContent = name;
+    document.getElementById("welcomeText").textContent = "Welcome, " + name;
+    const type = localStorage.getItem("reccord_account_type") || "";
+    document.getElementById("roleLabel").textContent =
+      type === "organisation" ? "Admin" : type === "worker" ? "Worker" : "Regular";
+
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
 
     async function loadGrid() {
-      const gridEl = document.getElementById('miniGrid');
-      const metaEl = document.getElementById('gridMeta');
-      const listEl = document.getElementById('recentList');
+      const grid = document.getElementById("grid");
+      const metaEl = document.getElementById("gridMeta");
+      const listEl = document.getElementById("recentList");
       try {
         const meta = await GridAPI.getMine();
         const placements = meta.placements || [];
-        document.getElementById('commitCount').textContent = String(placements.length);
+        document.getElementById("commitCount").textContent = String(placements.length);
 
-        let html = '';
-        for (let i = 0; i < 128; i++) {
-          html += '<span class="' + (i < placements.length ? 'on' : '') + '"></span>';
+        const cells = 96;
+        let html = "";
+        for (let i = 0; i < cells; i++) {
+          const p = placements[i];
+          if (p) {
+            const cls = "filled c" + (i % 5);
+            html += '<button type="button" class="' + cls + '" title="' +
+              escapeHtml(p.object_name || "") +
+              '" onclick="openPlacement(' + i + ')"></button>';
+          } else {
+            html += "<button type=\"button\" disabled></button>";
+          }
         }
-        gridEl.innerHTML = html;
+        grid.innerHTML = html;
+        window.__placements = placements;
 
         metaEl.textContent =
-          (meta.rows || 54) + '×' + (meta.cols || 64) +
-          ' • storage: ' + (meta.storage || '—') +
-          (meta.updated_at ? ' • updated ' + new Date(meta.updated_at).toLocaleString() : '');
+          (meta.rows || 54) + "×" + (meta.cols || 64) +
+          " · " + (meta.storage || "—") +
+          (meta.updated_at ? " · " + new Date(meta.updated_at).toLocaleString() : "");
 
         if (!placements.length) {
-          listEl.innerHTML = '<div class="card"><p style="margin:0;font-size:0.9rem;color:#94a3b8;">No placements yet. Commit to write to your tenant grid on B2.</p></div>';
+          listEl.innerHTML = '<div class="card"><p style="margin:0;opacity:0.85;">No placements yet. Commit to place on your tenant grid (B2).</p></div>';
         } else {
-          listEl.innerHTML = placements.slice(0, 12).map(p => `
-            <div class="card">
-              <strong>${escapeHtml(p.object_name || p.placement_id)}</strong>
-              <p style="margin:0.25rem 0 0;font-size:0.8rem;color:#94a3b8;">
-                ${p.created_at ? new Date(p.created_at).toLocaleString() : ''}
-                ${p.gsp_key ? ' • ' + escapeHtml(String(p.gsp_key).slice(0, 40)) : ''}
-              </p>
-            </div>
-          `).join('');
+          listEl.innerHTML = placements.slice(0, 12).map(function (p, idx) {
+            return (
+              '<div class="card" style="cursor:pointer;" onclick="openPlacement(' + idx + ')">' +
+              "<strong>" + escapeHtml(p.object_name || p.placement_id) + "</strong>" +
+              '<p style="margin:0.25rem 0 0;font-size:0.8rem;opacity:0.85;">' +
+              (p.created_at ? new Date(p.created_at).toLocaleString() : "") +
+              (p.gsp_key ? " · " + escapeHtml(String(p.gsp_key).slice(0, 36)) : "") +
+              "</p></div>"
+            );
+          }).join("");
         }
-      } catch (err) {
-        metaEl.textContent = 'Grid error: ' + err.message;
-        listEl.innerHTML = '<div class="card"><p style="margin:0;color:#f87171;font-size:0.9rem;">' + escapeHtml(err.message) + '</p></div>';
+      } catch (e) {
+        metaEl.textContent = "Grid: " + e.message;
+        document.getElementById("error").textContent = e.message;
       }
     }
 
-    function escapeHtml(s) {
-      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    function openPlacement(idx) {
+      const p = (window.__placements || [])[idx];
+      if (!p) return;
+      sessionStorage.setItem("detail_placement", JSON.stringify(p));
+      if (p.object_id) sessionStorage.setItem("detail_object_id", p.object_id);
+      window.location.href = "/pages/commit-detail.html";
     }
 
     loadGrid();

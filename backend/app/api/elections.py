@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.services.election_b2_service import upsert_host_election_on_b2
 from app.services.election_service import (
     add_candidate,
     create_election,
@@ -23,15 +25,14 @@ from app.services.voting_service import (
     register_voter,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/elections", tags=["elections"])
 
-
-# ---------- Schemas ----------
 
 class CreateElectionRequest(BaseModel):
     title: str = Field(min_length=1)
     description: Optional[str] = None
-    election_type: str                          # government | institution
+    election_type: str
     level: str
     host_name: str
     host_phone: str
@@ -63,7 +64,32 @@ class CastVoteRequest(BaseModel):
     candidate_id: str
 
 
-# ---------- Host endpoints ----------
+def _election_public(e) -> dict:
+    return {
+        "id": str(e.id),
+        "election_id": e.election_id,
+        "title": e.title,
+        "status": e.status,
+        "total_candidates": getattr(e, "total_candidates", None),
+        "election_type": getattr(e, "election_type", None),
+        "level": getattr(e, "level", None),
+        "host_name": getattr(e, "host_name", None),
+        "host_phone": getattr(e, "host_phone", None),
+    }
+
+
+def _mirror_b2(election, host_phone: str | None = None) -> None:
+    try:
+        phone = host_phone or getattr(election, "host_phone", None)
+        if not phone:
+            return
+        upsert_host_election_on_b2(
+            host_phone=phone,
+            election=_election_public(election),
+        )
+    except Exception as exc:
+        logger.exception("B2 host election mirror failed: %s", exc)
+
 
 @router.post("/create")
 def create_election_endpoint(
@@ -86,6 +112,7 @@ def create_election_endpoint(
         )
         db.commit()
         db.refresh(election)
+        _mirror_b2(election, payload.host_phone)
         return {
             "id": str(election.id),
             "election_id": election.election_id,
@@ -133,6 +160,7 @@ def publish_election_endpoint(
         election = publish_election(db, election_id=election_id)
         db.commit()
         db.refresh(election)
+        _mirror_b2(election)
         return {
             "id": str(election.id),
             "election_id": election.election_id,
@@ -148,18 +176,11 @@ def list_host_elections_endpoint(
     host_phone: str,
     db: Session = Depends(get_db),
 ):
+    """Cross-device: any client with host phone loads full list from DB."""
     elections = list_host_elections(db, host_phone=host_phone)
     return {
-        "elections": [
-            {
-                "id": str(e.id),
-                "election_id": e.election_id,
-                "title": e.title,
-                "status": e.status,
-                "total_candidates": e.total_candidates,
-            }
-            for e in elections
-        ]
+        "elections": [_election_public(e) for e in elections],
+        "storage": "database+b2_mirror",
     }
 
 
@@ -171,8 +192,6 @@ def get_results_endpoint(
     results = get_results(db, election_id=election_id)
     return {"results": results}
 
-
-# ---------- Voter endpoints ----------
 
 @router.get("/credential/{election_credential}")
 def get_election_by_credential_endpoint(
