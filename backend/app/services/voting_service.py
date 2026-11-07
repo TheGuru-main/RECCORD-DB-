@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,16 @@ from app.models.election_voter import ElectionVoter
 from app.models.user import User
 from app.models.vote import Vote
 from app.services.placement_service import place_vote
+
+
+def _as_uuid(value: str | UUID) -> UUID:
+    """Normalize API identifiers for SQLAlchemy UUID columns."""
+    if isinstance(value, UUID):
+        return value
+    try:
+        return UUID(str(value))
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise ValueError("invalid identifier") from exc
 
 
 def _phone_exists_in_main_reccord(db: Session, phone: str) -> bool:
@@ -26,6 +38,9 @@ def register_voter(
     phone: str,
     identity_number: str,
     photo_url: str | None = None,
+    country: str | None = None,
+    state: str | None = None,
+    lga: str | None = None,
 ) -> ElectionVoter:
     phone = phone.strip()
     full_name = full_name.strip()
@@ -58,11 +73,37 @@ def register_voter(
         phone=phone,
         identity_number=identity_number,
         photo_url=photo_url,
+        country=country,
+        state=state,
+        lga=lga,
         has_voted=False,
     )
     db.add(voter)
     db.flush()
     return voter
+
+
+def get_voter(db: Session, *, voter_id: str | UUID) -> ElectionVoter | None:
+    """Fetch one voter by UUID."""
+    try:
+        voter_uuid = _as_uuid(voter_id)
+    except ValueError:
+        return None
+    return db.get(ElectionVoter, voter_uuid)
+
+
+def list_election_voters(
+    db: Session, *, election_id: str | UUID
+) -> list[ElectionVoter]:
+    """List all voters registered for an election."""
+    election_uuid = _as_uuid(election_id)
+    return list(
+        db.scalars(
+            select(ElectionVoter)
+            .where(ElectionVoter.election_id == election_uuid)
+            .order_by(ElectionVoter.created_at.desc())
+        )
+    )
 
 
 def cast_vote(
@@ -71,7 +112,7 @@ def cast_vote(
     voter_id: str,
     candidate_id: str,
 ) -> Vote:
-    voter = db.get(ElectionVoter, voter_id)
+    voter = db.get(ElectionVoter, _as_uuid(voter_id))
     if voter is None:
         raise ValueError("voter not found")
 
@@ -87,7 +128,7 @@ def cast_vote(
 
     candidate = db.scalar(
         select(Candidate).where(
-            Candidate.id == candidate_id,
+            Candidate.id == _as_uuid(candidate_id),
             Candidate.election_id == election.id,
         )
     )
@@ -115,8 +156,9 @@ def cast_vote(
     return vote
 
 
-def get_results(db: Session, *, election_id: str) -> list[dict]:
+def get_results(db: Session, *, election_id: str | UUID) -> list[dict]:
     """Return winner ranking (normal vote count per candidate)."""
+    election_uuid = _as_uuid(election_id)
     rows = db.execute(
         select(
             Candidate.id,
@@ -125,7 +167,7 @@ def get_results(db: Session, *, election_id: str) -> list[dict]:
             func.count(Vote.id).label("votes"),
         )
         .outerjoin(Vote, Vote.candidate_id == Candidate.id)
-        .where(Candidate.election_id == election_id)
+        .where(Candidate.election_id == election_uuid)
         .group_by(Candidate.id, Candidate.name, Candidate.party)
         .order_by(func.count(Vote.id).desc())
     ).all()
