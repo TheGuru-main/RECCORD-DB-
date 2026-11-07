@@ -15,6 +15,8 @@ from app.api.workers import router as workers_router
 from app.api.roles import router as roles_router
 from app.api.elections import router as elections_router
 from app.api.grid import router as grid_router
+from app.api.hosts import router as hosts_router
+from app.api.media import router as media_router
 from app.core.schema import initialize_schema
 
 # Repo layout on Render: root has index.html, pages/, css/, js/
@@ -51,6 +53,8 @@ app.include_router(workers_router)
 app.include_router(roles_router)
 app.include_router(elections_router)
 app.include_router(grid_router)
+app.include_router(media_router)
+app.include_router(hosts_router)
 
 
 @app.get("/health")

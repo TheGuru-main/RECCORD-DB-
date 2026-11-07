@@ -9,37 +9,50 @@
 <body>
   <div class="page">
     <a class="back-link" href="/pages/e-voting/type.html">← Back</a>
-    <h2>Election Host</h2>
-    <p>These details identify you as host for this device session.</p>
-
+    <h2>Election Host signup</h2>
+    <p>Password lets you open the host dashboard on any device.</p>
     <label>Full name *</label>
     <input id="hostName" />
     <label>Phone *</label>
     <input id="hostPhone" type="tel" placeholder="+234…" />
-    <label>School ID or National ID *</label>
+    <label>School / National ID *</label>
     <input id="hostIdentity" />
-
-    <button class="btn primary" onclick="saveHost()">Continue to dashboard</button>
+    <label>Password *</label>
+    <input id="password" type="password" minlength="6" placeholder="Min 6 characters" />
+    <button class="btn primary" id="btn" onclick="saveHost()">Create host account</button>
     <p class="err" id="error"></p>
+    <a class="btn ghost" href="/pages/e-voting/host-login.html">Already a host? Log in</a>
   </div>
+  <script src="/js/api.js"></script>
   <script>
-    function saveHost() {
-      const hostName = document.getElementById("hostName").value.trim();
-      const hostPhone = document.getElementById("hostPhone").value.trim();
-      const hostIdentity = document.getElementById("hostIdentity").value.trim();
+    async function saveHost() {
+      const host_name = document.getElementById("hostName").value.trim();
+      const host_phone = document.getElementById("hostPhone").value.trim();
+      const identity_number = document.getElementById("hostIdentity").value.trim();
+      const password = document.getElementById("password").value;
       const err = document.getElementById("error");
-      if (!hostName || !hostPhone || !hostIdentity) {
-        err.textContent = "All fields are required";
+      const btn = document.getElementById("btn");
+      if (!host_name || !host_phone || !identity_number || password.length < 6) {
+        err.textContent = "All fields required (password min 6)";
         return;
       }
-      // Persist across refresh (Phase 2 requirement)
-      localStorage.setItem("evote_host_name", hostName);
-      localStorage.setItem("evote_host_phone", hostPhone);
-      localStorage.setItem("evote_host_identity", hostIdentity);
-      sessionStorage.setItem("hostName", hostName);
-      sessionStorage.setItem("hostPhone", hostPhone);
-      sessionStorage.setItem("hostIdentity", hostIdentity);
-      window.location.href = "/pages/e-voting/host-dashboard.html";
+      btn.disabled = true;
+      err.textContent = "";
+      try {
+        await api("/hosts/register", {
+          method: "POST",
+          body: { host_phone, host_name, password, identity_number }
+        });
+        localStorage.setItem("evote_host_phone", host_phone);
+        localStorage.setItem("evote_host_name", host_name);
+        localStorage.setItem("evote_host_identity", identity_number);
+        sessionStorage.setItem("hostPhone", host_phone);
+        sessionStorage.setItem("hostName", host_name);
+        window.location.href = "/pages/e-voting/host-dashboard.html";
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false;
+      }
     }
   </script>
 </body>

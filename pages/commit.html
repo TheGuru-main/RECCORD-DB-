@@ -5,103 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>New Commit — RECCORD DB</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../css/style.css" />
-  <style>
-    .tools { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
-    .tools button {
-      background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
-      padding: 0.4rem 0.6rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
-    }
-    textarea { min-height: 140px; resize: vertical; }
-  </style>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <header class="app-header">
-    <button class="menu-btn" onclick="history.back()"><i class="fa fa-arrow-left"></i></button>
-    <span class="title">New Commit</span>
-    <span class="user-label" id="headerName"></span>
-  </header>
-
   <div class="page">
+    <a class="back-link" href="/pages/home.html">← Back</a>
+    <h2>New Commit</h2>
     <label>Object / Title *</label>
     <input type="text" id="objectName" placeholder="What are you recording?" />
-
     <label>Narration</label>
-    <div class="tools">
-      <button type="button" onclick="format('bold')"><i class="fa fa-bold"></i></button>
-      <button type="button" onclick="format('underline')"><i class="fa fa-underline"></i></button>
-      <button type="button" onclick="format('insertUnorderedList')"><i class="fa fa-list-ul"></i></button>
-    </div>
-    <textarea id="narration" placeholder="Details, notes, story..."></textarea>
-
-    <label>Record Type *</label>
+    <textarea id="narration" rows="5" placeholder="Details…"></textarea>
+    <label>Record type</label>
     <select id="recordType">
-      <option value="append">Append Only</option>
+      <option value="append">Append only</option>
       <option value="mutable">Mutable</option>
       <option value="immutable">Immutable</option>
     </select>
-
-    <label>Attach Media (stored later with full media pipeline)</label>
+    <label>Media (image, audio, video, document — stored on your tenant B2 path)</label>
     <input type="file" id="media" accept="image/*,audio/*,video/*,.pdf,.doc,.docx" />
-
     <button class="btn primary" id="submitBtn" onclick="submitCommit()">Commit</button>
-    <a href="home.html" class="btn">Cancel</a>
-    <p id="error" style="color:#f87171;"></p>
-    <p id="success" style="color:#4ade80;"></p>
+    <p class="err" id="error"></p>
+    <p class="ok" id="success"></p>
   </div>
-
-  <script src="../js/api.js"></script>
-  <script src="../js/shell.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/shell.js"></script>
   <script>
-    if (!requireAuth()) throw new Error('auth');
-    document.getElementById('headerName').textContent = getDisplayName();
+    if (typeof requireAuth === "function" && !requireAuth()) throw new Error("auth");
 
-    function format(cmd) {
-      document.execCommand(cmd, false, null);
+    function readFileAsBase64(file) {
+      return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function () { resolve(reader.result); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     }
 
     async function submitCommit() {
-      const name = document.getElementById('objectName').value.trim();
-      const content = document.getElementById('narration').value.trim();
-      const errorEl = document.getElementById('error');
-      const successEl = document.getElementById('success');
-      const btn = document.getElementById('submitBtn');
-
-      errorEl.textContent = '';
-      successEl.textContent = '';
-
-      if (!name) {
-        errorEl.textContent = 'Object / Title is required';
-        return;
-      }
-
+      const name = document.getElementById("objectName").value.trim();
+      const content = document.getElementById("narration").value.trim();
+      const fileInput = document.getElementById("media");
+      const err = document.getElementById("error");
+      const ok = document.getElementById("success");
+      const btn = document.getElementById("submitBtn");
+      err.textContent = "";
+      ok.textContent = "";
+      if (!name) { err.textContent = "Title required"; return; }
       btn.disabled = true;
-      btn.textContent = 'Committing...';
-
+      btn.textContent = "Committing…";
       try {
-        // 1. Create object (GSP placement happens server-side)
         const obj = await ObjectsAPI.create(name);
-
-        // 2. Optional narration
-        if (content) {
-          await NarrationsAPI.create(obj.id, content);
+        if (content) await NarrationsAPI.create(obj.id, content);
+        const file = fileInput.files && fileInput.files[0];
+        if (file && typeof MediaAPI !== "undefined") {
+          const dataUrl = await readFileAsBase64(file);
+          await MediaAPI.upload(obj.id, file.name, file.type || "application/octet-stream", dataUrl);
         }
-
-        // Store last commit locally for Home recent list
-        const recent = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
-        recent.unshift({
-          id: obj.id,
-          name: obj.name || name,
-          at: new Date().toISOString()
-        });
-        localStorage.setItem('reccord_recent', JSON.stringify(recent.slice(0, 20)));
-
-        successEl.textContent = 'Commit saved.';
-        setTimeout(() => { window.location.href = 'home.html'; }, 700);
-      } catch (err) {
-        errorEl.textContent = err.message;
+        ok.textContent = "Saved.";
+        setTimeout(function () { window.location.href = "/pages/home.html"; }, 600);
+      } catch (e) {
+        err.textContent = e.message;
         btn.disabled = false;
-        btn.textContent = 'Commit';
+        btn.textContent = "Commit";
       }
     }
   </script>

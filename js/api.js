@@ -80,6 +80,21 @@ const NarrationsAPI = {
   }
 };
 
+const MediaAPI = {
+  upload(objectId, filename, contentType, dataBase64) {
+    return api("/media/upload", {
+      method: "POST",
+      body: {
+        object_id: objectId,
+        filename: filename,
+        content_type: contentType,
+        data_base64: dataBase64
+      }
+    });
+  },
+  list(objectId) { return api("/media/object/" + objectId); }
+};
+
 const GridAPI = {
   getMine() { return api("/grid"); }
 };

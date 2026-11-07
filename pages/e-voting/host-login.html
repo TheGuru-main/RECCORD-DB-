@@ -9,14 +9,12 @@
 <body>
   <div class="page">
     <a class="back-link" href="/pages/e-voting/entry.html">← Back</a>
-    <h2>Host access</h2>
-    <p>Use the same host phone you registered with. Works on any device — list loads from the server.</p>
-
+    <h2>Host login</h2>
+    <p>Any device. Uses your host phone + password.</p>
     <label>Host phone *</label>
     <input id="phone" type="tel" placeholder="+234…" />
-    <label>Display name (optional)</label>
-    <input id="name" placeholder="Your name" />
-
+    <label>Password *</label>
+    <input id="password" type="password" />
     <button class="btn primary" id="btn" onclick="enter()">Open dashboard</button>
     <p class="err" id="error"></p>
     <a class="btn ghost" href="/pages/e-voting/host-signup.html">First time? Host signup</a>
@@ -24,25 +22,26 @@
   <script src="/js/api.js"></script>
   <script>
     async function enter() {
-      const phone = document.getElementById("phone").value.trim();
-      const name = document.getElementById("name").value.trim();
+      const host_phone = document.getElementById("phone").value.trim();
+      const password = document.getElementById("password").value;
       const err = document.getElementById("error");
       const btn = document.getElementById("btn");
-      if (!phone) { err.textContent = "Phone required"; return; }
+      if (!host_phone || !password) { err.textContent = "Phone and password required"; return; }
       btn.disabled = true;
-      btn.textContent = "Loading…";
       try {
-        // Prove server has data for this host (cross-device)
-        await ElectionsAPI.listHostElections(phone);
-        localStorage.setItem("evote_host_phone", phone);
-        if (name) localStorage.setItem("evote_host_name", name);
-        sessionStorage.setItem("hostPhone", phone);
-        if (name) sessionStorage.setItem("hostName", name);
+        const data = await api("/hosts/login", {
+          method: "POST",
+          body: { host_phone, password }
+        });
+        localStorage.setItem("evote_host_phone", data.host_phone);
+        localStorage.setItem("evote_host_name", data.host_name || "");
+        if (data.identity_number) localStorage.setItem("evote_host_identity", data.identity_number);
+        sessionStorage.setItem("hostPhone", data.host_phone);
+        sessionStorage.setItem("hostName", data.host_name || "");
         window.location.href = "/pages/e-voting/host-dashboard.html";
       } catch (e) {
         err.textContent = e.message;
         btn.disabled = false;
-        btn.textContent = "Open dashboard";
       }
     }
   </script>
