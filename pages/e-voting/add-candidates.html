@@ -3,110 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Candidates</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Add candidates — E-Voting</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div class="page">
-    <h2>Add Candidates</h2>
+    <a class="back-link" href="/pages/e-voting/create-election.html">← Back</a>
+    <h2>Add candidates</h2>
     <p id="electionLabel"></p>
 
     <div id="candidateList"></div>
 
     <div class="card">
-      <label>Candidate Name *</label>
-      <input type="text" id="candName" placeholder="Full name" />
-
-      <label>Party / Affiliation</label>
-      <input type="text" id="candParty" placeholder="Party name" />
-
-      <label>Short Details</label>
-      <textarea id="candDetails" rows="2" placeholder="Bio or manifesto summary"></textarea>
-
-      <button class="btn secondary" onclick="addCandidate()">+ Add This Candidate</button>
+      <label>Candidate name *</label>
+      <input id="candName" />
+      <label>Party / affiliation</label>
+      <input id="candParty" />
+      <label>Details</label>
+      <textarea id="candDetails" rows="2"></textarea>
+      <label>Country</label>
+      <input id="candCountry" placeholder="NG" />
+      <label>LGA</label>
+      <input id="candLga" />
+      <button class="btn clay" type="button" onclick="addCandidate()">+ Add candidate</button>
     </div>
 
-    <button class="btn primary" id="finishBtn" onclick="finish()">Finish & Publish Election</button>
-    <a href="create-election.html" class="btn">← Back</a>
-    <p id="error" style="color:#f87171;margin-top:1rem;"></p>
-    <p id="credentialBox" style="margin-top:1rem;font-size:0.9rem;color:#4ade80;"></p>
+    <button class="btn primary" id="finishBtn" onclick="finish()">Finish &amp; publish</button>
+    <p class="err" id="error"></p>
+    <p class="ok" id="hint"></p>
   </div>
-
-  <script src="../../js/api.js"></script>
+  <script src="/js/api.js"></script>
   <script>
-    const electionId = sessionStorage.getItem('currentElectionId');
-    const electionTitle = sessionStorage.getItem('electionTitle') || "Election";
-    document.getElementById('electionLabel').textContent = electionTitle;
-
+    const electionId = sessionStorage.getItem("currentElectionId");
+    const electionTitle = sessionStorage.getItem("electionTitle") || "Election";
+    document.getElementById("electionLabel").textContent = electionTitle;
     let candidates = [];
+    // Local extras until backend has country/lga columns
+    const extras = {};
 
-    async function addCandidate() {
-      const name = document.getElementById('candName').value.trim();
-      const party = document.getElementById('candParty').value.trim();
-      const details = document.getElementById('candDetails').value.trim();
-      const errorEl = document.getElementById('error');
-
-      if (!name) {
-        errorEl.textContent = "Candidate name is required";
-        return;
-      }
-      if (!electionId) {
-        errorEl.textContent = "No election selected. Start again.";
-        return;
-      }
-
-      errorEl.textContent = "";
-      try {
-        await ElectionsAPI.addCandidate({
-          election_id: electionId,
-          name,
-          party: party || null,
-          details: details || null
-        });
-
-        candidates.push({ name, party });
-        renderList();
-
-        document.getElementById('candName').value = '';
-        document.getElementById('candParty').value = '';
-        document.getElementById('candDetails').value = '';
-      } catch (err) {
-        errorEl.textContent = err.message;
-      }
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
 
     function renderList() {
-      const list = document.getElementById('candidateList');
-      list.innerHTML = candidates.map((c, i) =>
-        `<div class="card"><strong>${i + 1}. ${c.name}</strong><br>
-         <span style="color:#94a3b8;font-size:0.9rem">${c.party || 'No party'}</span></div>`
-      ).join('');
+      document.getElementById("candidateList").innerHTML = candidates.map(function (c, i) {
+        const x = extras[c.id] || {};
+        return (
+          '<div class="card" style="cursor:pointer;" onclick="openCand(\'' + escapeHtml(c.id) + '\')">' +
+          "<strong>" + (i + 1) + ". " + escapeHtml(c.name) + "</strong>" +
+          '<p style="margin:0.3rem 0 0;font-size:0.85rem;opacity:0.85;">' +
+          escapeHtml(c.party || "No party") +
+          (x.country || x.lga ? " · " + escapeHtml([x.country, x.lga].filter(Boolean).join(" / ")) : "") +
+          "</p></div>"
+        );
+      }).join("");
+    }
+
+    function openCand(id) {
+      sessionStorage.setItem("detail_candidate_id", id);
+      sessionStorage.setItem("detail_candidate_election_id", electionId);
+      const x = extras[id] || {};
+      sessionStorage.setItem("detail_candidate_extra", JSON.stringify(x));
+      window.location.href = "/pages/e-voting/candidate-detail.html";
+    }
+
+    async function addCandidate() {
+      const name = document.getElementById("candName").value.trim();
+      const party = document.getElementById("candParty").value.trim();
+      const details = document.getElementById("candDetails").value.trim();
+      const country = document.getElementById("candCountry").value.trim();
+      const lga = document.getElementById("candLga").value.trim();
+      const err = document.getElementById("error");
+      err.textContent = "";
+      if (!name) { err.textContent = "Name required"; return; }
+      if (!electionId) { err.textContent = "No election — start create again"; return; }
+      try {
+        const data = await ElectionsAPI.addCandidate({
+          election_id: electionId,
+          name: name,
+          party: party || null,
+          details: details || null
+        });
+        candidates.push({ id: data.id, name: data.name, party: data.party, details: details });
+        extras[data.id] = { country: country, lga: lga, details: details, party: party, name: name };
+        renderList();
+        document.getElementById("candName").value = "";
+        document.getElementById("candParty").value = "";
+        document.getElementById("candDetails").value = "";
+        document.getElementById("candLga").value = "";
+      } catch (e) {
+        err.textContent = e.message;
+      }
     }
 
     async function finish() {
-      const errorEl = document.getElementById('error');
-      const btn = document.getElementById('finishBtn');
-      if (candidates.length < 1) {
-        errorEl.textContent = "Add at least one candidate";
-        return;
-      }
-
+      const err = document.getElementById("error");
+      const btn = document.getElementById("finishBtn");
+      if (candidates.length < 1) { err.textContent = "Add at least one candidate"; return; }
       btn.disabled = true;
-      btn.textContent = "Publishing...";
+      btn.textContent = "Publishing…";
       try {
-        await ElectionsAPI.publish(electionId);
-        const credential = sessionStorage.getItem('currentElectionCredential');
-        document.getElementById('credentialBox').textContent =
-          "Election published! Share this Election ID with voters: " + credential;
-        btn.textContent = "Published";
-        setTimeout(() => {
-          window.location.href = "host-dashboard.html";
-        }, 2500);
-      } catch (err) {
-        errorEl.textContent = err.message;
+        const pub = await ElectionsAPI.publish(electionId);
+        const credential = pub.election_id || sessionStorage.getItem("currentElectionCredential") || "";
+        sessionStorage.setItem("last_published_credential", credential);
+        sessionStorage.setItem("currentElectionCredential", credential);
+        // Stay on host dashboard with credential shown
+        window.location.href = "/pages/e-voting/host-dashboard.html";
+      } catch (e) {
+        err.textContent = e.message;
         btn.disabled = false;
-        btn.textContent = "Finish & Publish Election";
+        btn.textContent = "Finish & publish";
       }
     }
   </script>

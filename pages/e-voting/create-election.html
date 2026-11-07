@@ -3,72 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create Election</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Create election — E-Voting</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div class="page">
-    <h2>Create Election</h2>
+    <a class="back-link" href="/pages/e-voting/host-dashboard.html">← Back</a>
+    <h2>Create election</h2>
 
-    <label>Election Name *</label>
-    <input type="text" id="title" placeholder="e.g. Student Council 2026" />
-
+    <label>Election name *</label>
+    <input id="title" />
     <label>Level *</label>
-    <input type="text" id="level" placeholder="e.g. School, Faculty, National..." />
-
+    <input id="level" placeholder="School, Faculty, National…" />
     <label>Description</label>
-    <textarea id="description" rows="3" placeholder="Optional details"></textarea>
+    <textarea id="description" rows="3"></textarea>
 
-    <button class="btn primary" id="nextBtn" onclick="createElection()">Next: Add Candidates</button>
-    <a href="host-dashboard.html" class="btn">Cancel</a>
-    <p id="error" style="color:#f87171;margin-top:1rem;"></p>
+    <button class="btn primary" id="btn" onclick="createEl()">Next: Add candidates</button>
+    <p class="err" id="error"></p>
   </div>
-
-  <script src="../../js/api.js"></script>
+  <script src="/js/api.js"></script>
   <script>
-    async function createElection() {
-      const title = document.getElementById('title').value.trim();
-      const level = document.getElementById('level').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const errorEl = document.getElementById('error');
-      const btn = document.getElementById('nextBtn');
+    async function createEl() {
+      const title = document.getElementById("title").value.trim();
+      const level = document.getElementById("level").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const err = document.getElementById("error");
+      const btn = document.getElementById("btn");
+      if (!title || !level) { err.textContent = "Name and level required"; return; }
 
-      if (!title || !level) {
-        errorEl.textContent = "Election Name and Level are required";
+      const hostName = localStorage.getItem("evote_host_name") || sessionStorage.getItem("hostName") || "Host";
+      const hostPhone = localStorage.getItem("evote_host_phone") || sessionStorage.getItem("hostPhone") || "";
+      const hostIdentity = localStorage.getItem("evote_host_identity") || sessionStorage.getItem("hostIdentity") || "";
+      const electionType = sessionStorage.getItem("evoteType") || "institution";
+
+      if (!hostPhone) {
+        err.textContent = "Host phone missing — complete host signup first";
         return;
       }
 
-      const hostName = sessionStorage.getItem('hostName') || "Host";
-      const hostPhone = sessionStorage.getItem('hostPhone') || "";
-      const hostIdentity = sessionStorage.getItem('hostIdentity') || "";
-      const electionType = sessionStorage.getItem('evoteType') || "institution";
-
       btn.disabled = true;
-      btn.textContent = "Creating...";
-      errorEl.textContent = "";
-
+      btn.textContent = "Creating…";
+      err.textContent = "";
       try {
         const data = await ElectionsAPI.create({
-          title,
+          title: title,
           description: description || null,
           election_type: electionType,
-          level,
+          level: level,
           host_name: hostName,
           host_phone: hostPhone,
           host_identity_number: hostIdentity
         });
-
-        // Save for next steps
-        sessionStorage.setItem('currentElectionId', data.id);
-        sessionStorage.setItem('currentElectionCredential', data.election_id);
-        sessionStorage.setItem('electionTitle', title);
-
-        window.location.href = "add-candidates.html";
-      } catch (err) {
-        errorEl.textContent = err.message;
+        sessionStorage.setItem("currentElectionId", data.id);
+        sessionStorage.setItem("currentElectionCredential", data.election_id);
+        sessionStorage.setItem("electionTitle", title);
+        window.location.href = "/pages/e-voting/add-candidates.html";
+      } catch (e) {
+        err.textContent = e.message;
         btn.disabled = false;
-        btn.textContent = "Next: Add Candidates";
+        btn.textContent = "Next: Add candidates";
       }
     }
   </script>

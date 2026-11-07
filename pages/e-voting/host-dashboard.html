@@ -3,23 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Election Host Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Host dashboard — E-Voting</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div class="page">
-    <h2>Election Dashboard</h2>
-    <p>Manage your elections</p>
+    <a class="back-link" href="/pages/e-voting/entry.html">← E-Voting home</a>
+    <h2>Host dashboard</h2>
+    <p id="hostLabel" style="font-size:0.9rem;"></p>
 
-    <a href="create-election.html" class="btn primary">+ Create New Election</a>
-
-    <div class="card">
-      <strong>My Elections</strong>
-      <p style="margin-top:0.5rem;font-size:0.9rem;color:#94a3b8;">No elections yet</p>
+    <div id="banner" class="card" style="display:none;border-color:#bbf7d0;">
+      <strong>Published</strong>
+      <p style="margin:0.4rem 0 0;word-break:break-all;" id="bannerCred"></p>
+      <button class="btn clay" style="margin-top:0.75rem;" type="button" onclick="copyBanner()">Copy Election ID</button>
     </div>
 
-    <a href="../../index.html" class="btn">← Exit E-Voting</a>
+    <a class="btn primary" href="/pages/e-voting/create-election.html">+ Create election</a>
+
+    <h3 style="margin-top:1.25rem;font-size:1rem;">Your elections</h3>
+    <div id="list"><p style="opacity:0.8;">Loading…</p></div>
+    <p class="err" id="error"></p>
   </div>
+  <script src="/js/api.js"></script>
+  <script>
+    const hostPhone = localStorage.getItem("evote_host_phone") || sessionStorage.getItem("hostPhone") || "";
+    const hostName = localStorage.getItem("evote_host_name") || sessionStorage.getItem("hostName") || "Host";
+    document.getElementById("hostLabel").textContent = hostName + (hostPhone ? " · " + hostPhone : "");
+
+    if (!hostPhone) {
+      document.getElementById("list").innerHTML =
+        '<div class="card"><p style="margin:0;">No host session. <a href="/pages/e-voting/host-signup.html" style="color:var(--clay)">Sign up as host</a></p></div>';
+    }
+
+    const pubCred = sessionStorage.getItem("last_published_credential");
+    if (pubCred) {
+      document.getElementById("banner").style.display = "block";
+      document.getElementById("bannerCred").textContent = pubCred;
+    }
+
+    function copyBanner() {
+      const t = document.getElementById("bannerCred").textContent;
+      if (t) navigator.clipboard.writeText(t).catch(function () {});
+    }
+
+    function escapeHtml(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function loadList() {
+      if (!hostPhone) return;
+      const el = document.getElementById("list");
+      const err = document.getElementById("error");
+      err.textContent = "";
+      try {
+        const data = await ElectionsAPI.listHostElections(hostPhone);
+        const elections = data.elections || [];
+        if (!elections.length) {
+          el.innerHTML = '<div class="card"><p style="margin:0;opacity:0.85;">No elections yet. Create one.</p></div>';
+          return;
+        }
+        el.innerHTML = elections.map(function (e) {
+          return (
+            '<div class="card" style="cursor:pointer;" onclick="openElection(\'' +
+            escapeHtml(e.id) + '\',\'' + escapeHtml(e.election_id) + '\')">' +
+            "<strong>" + escapeHtml(e.title) + "</strong>" +
+            '<p style="margin:0.35rem 0 0;font-size:0.85rem;opacity:0.85;">' +
+            escapeHtml(e.status || "") +
+            " · " + (e.total_candidates != null ? e.total_candidates : "—") + " candidates</p>" +
+            '<p style="margin:0.35rem 0 0;font-size:0.8rem;word-break:break-all;color:var(--clay);">ID: ' +
+            escapeHtml(e.election_id) + "</p></div>"
+          );
+        }).join("");
+      } catch (e) {
+        el.innerHTML = "";
+        err.textContent = e.message;
+      }
+    }
+
+    function openElection(id, credential) {
+      sessionStorage.setItem("detail_election_id", id);
+      sessionStorage.setItem("detail_election_credential", credential || "");
+      window.location.href = "/pages/e-voting/election-detail.html";
+    }
+
+    loadList();
+  </script>
 </body>
 </html>

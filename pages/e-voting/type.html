@@ -3,30 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Election Type — E-Voting</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Type — E-Voting</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div class="page">
-    <h2>Select Election Type</h2>
-    <p id="roleLabel"></p>
-
-    <a href="#" class="btn primary" onclick="chooseType('government')">Government</a>
-    <a href="#" class="btn secondary" onclick="chooseType('institution')">Institution</a>
-    <a href="role.html" class="btn">← Back</a>
+    <a class="back-link" href="/pages/e-voting/role.html">← Back</a>
+    <h2>Election type</h2>
+    <div class="stack">
+      <button class="btn primary" onclick="pick('government')">Government</button>
+      <button class="btn primary" onclick="pick('institution')">Institution</button>
+    </div>
   </div>
-
   <script>
-    const role = sessionStorage.getItem('evoteRole') || 'voter';
-    document.getElementById('roleLabel').textContent = 'Role: ' + (role === 'host' ? 'Election Host' : 'Voter');
-
-    function chooseType(type) {
-      sessionStorage.setItem('evoteType', type);
-      if (role === 'host') {
-        window.location.href = 'host-signup.html';
+    function pick(t) {
+      sessionStorage.setItem("evoteType", t);
+      const role = sessionStorage.getItem("evoteRole") || "voter";
+      if (role === "host") {
+        window.location.href = "/pages/e-voting/host-signup.html";
       } else {
-        window.location.href = 'voter-signup.html';
+        window.location.href = "/pages/e-voting/voter-signup.html";
       }
     }
   </script>
