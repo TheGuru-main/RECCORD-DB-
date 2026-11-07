@@ -10,17 +10,13 @@
   <div class="page">
     <a class="back-link" href="javascript:history.back()">← Back</a>
     <h2 id="name">Candidate</h2>
-    <div class="card" id="body">
-      <p style="margin:0;">Loading…</p>
-    </div>
+    <div class="card" id="body"><p style="margin:0;">Loading…</p></div>
     <p class="err" id="error"></p>
   </div>
   <script src="/js/api.js"></script>
   <script>
     const electionId = sessionStorage.getItem("detail_candidate_election_id");
     const candidateId = sessionStorage.getItem("detail_candidate_id");
-    let extra = {};
-    try { extra = JSON.parse(sessionStorage.getItem("detail_candidate_extra") || "{}"); } catch (e) {}
 
     function escapeHtml(s) {
       return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -33,17 +29,20 @@
       }
       try {
         const data = await ElectionsAPI.listCandidates(electionId);
-        const c = (data.candidates || []).find(function (x) { return String(x.id) === String(candidateId); });
+        const c = (data.candidates || []).find(function (x) {
+          return String(x.id) === String(candidateId);
+        });
         if (!c) {
           document.getElementById("body").innerHTML = "<p style=\"margin:0;\">Not found</p>";
           return;
         }
         document.getElementById("name").textContent = c.name || "Candidate";
         const lines = [
-          ["Party", c.party || extra.party],
-          ["Details", c.details || extra.details],
-          ["Country", extra.country],
-          ["LGA", extra.lga],
+          ["Party", c.party],
+          ["About", c.about || c.details],
+          ["Country", c.country],
+          ["State", c.state],
+          ["LGA", c.lga],
           ["ID", c.id]
         ];
         document.getElementById("body").innerHTML = lines
@@ -52,7 +51,7 @@
             return "<p style=\"margin:0 0 0.5rem;\"><span style=\"opacity:0.7;\">" +
               escapeHtml(row[0]) + ":</span> " + escapeHtml(row[1]) + "</p>";
           })
-          .join("") || "<p style=\"margin:0;\">No extra fields</p>";
+          .join("") || "<p style=\"margin:0;\">No fields</p>";
       } catch (e) {
         document.getElementById("error").textContent = e.message;
       }

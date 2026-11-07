@@ -8,9 +8,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.candidate import Candidate
 from app.services.election_service import (
     add_candidate,
     create_election,
@@ -33,6 +35,7 @@ router = APIRouter(prefix="/elections", tags=["elections"])
 def _mirror_b2(election, host_phone: str | None = None) -> None:
     try:
         from app.services.election_b2_service import upsert_host_election_on_b2
+
         phone = host_phone or getattr(election, "host_phone", None)
         if not phone:
             return
@@ -68,6 +71,7 @@ class AddCandidateRequest(BaseModel):
     name: str = Field(min_length=1)
     party: Optional[str] = None
     details: Optional[str] = None
+    about: Optional[str] = None
     image_url: Optional[str] = None
     position: int = 0
     country: Optional[str] = None
@@ -130,6 +134,7 @@ def add_candidate_endpoint(payload: AddCandidateRequest, db: Session = Depends(g
             name=payload.name,
             party=payload.party,
             details=payload.details,
+            about=payload.about or payload.details,
             image_url=payload.image_url,
             position=payload.position,
             country=payload.country,
@@ -142,6 +147,8 @@ def add_candidate_endpoint(payload: AddCandidateRequest, db: Session = Depends(g
             "id": str(candidate.id),
             "name": candidate.name,
             "party": candidate.party,
+            "about": getattr(candidate, "about", None) or candidate.details,
+            "details": candidate.details,
             "country": candidate.country,
             "state": candidate.state,
             "lga": candidate.lga,
@@ -298,9 +305,6 @@ def cast_vote_endpoint(payload: CastVoteRequest, db: Session = Depends(get_db)):
 
 @router.get("/{election_id}/candidates")
 def list_candidates_endpoint(election_id: str, db: Session = Depends(get_db)):
-    from app.models.candidate import Candidate
-    from sqlalchemy import select
-
     candidates = list(
         db.scalars(
             select(Candidate)
@@ -314,6 +318,7 @@ def list_candidates_endpoint(election_id: str, db: Session = Depends(get_db)):
                 "id": str(c.id),
                 "name": c.name,
                 "party": c.party,
+                "about": getattr(c, "about", None) or c.details,
                 "details": c.details,
                 "image_url": c.image_url,
                 "country": c.country,

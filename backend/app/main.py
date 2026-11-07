@@ -19,8 +19,6 @@ from app.api.hosts import router as hosts_router
 from app.api.media import router as media_router
 from app.core.schema import initialize_schema
 
-# Repo layout on Render: root has index.html, pages/, css/, js/
-# Service rootDirectory is often "backend" — parent is repo root
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = BACKEND_DIR.parent
 FRONTEND_ROOT = REPO_ROOT if (REPO_ROOT / "index.html").exists() else BACKEND_DIR
@@ -32,11 +30,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(
-    title="RECCORD DB",
-    version="1.0.0",
-    lifespan=lifespan,
-)
+app = FastAPI(title="RECCORD DB", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,8 +47,8 @@ app.include_router(workers_router)
 app.include_router(roles_router)
 app.include_router(elections_router)
 app.include_router(grid_router)
-app.include_router(media_router)
 app.include_router(hosts_router)
+app.include_router(media_router)
 
 
 @app.get("/health")
@@ -62,8 +56,6 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
-# API stays on /auth, /objects, /grid, etc.
-# Static assets
 if (FRONTEND_ROOT / "css").is_dir():
     app.mount("/css", StaticFiles(directory=str(FRONTEND_ROOT / "css")), name="css")
 if (FRONTEND_ROOT / "js").is_dir():
@@ -79,9 +71,4 @@ def serve_index():
     index = FRONTEND_ROOT / "index.html"
     if index.is_file():
         return FileResponse(index)
-    return {
-        "service": "RECCORD DB",
-        "health": "/health",
-        "docs": "/docs",
-        "note": "index.html not found on server",
-    }
+    return {"service": "RECCORD DB", "health": "/health", "docs": "/docs"}

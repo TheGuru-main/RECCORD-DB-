@@ -11,6 +11,8 @@ from app.core.database import Base
 
 
 class Candidate(Base):
+    """A candidate belonging to one election."""
+
     __tablename__ = "candidates"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -24,6 +26,7 @@ class Candidate(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     party: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    about: Mapped[str | None] = mapped_column(Text, nullable=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     country: Mapped[str | None] = mapped_column(String(64), nullable=True)

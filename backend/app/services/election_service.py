@@ -62,6 +62,7 @@ def add_candidate(
     name: str,
     party: str | None = None,
     details: str | None = None,
+    about: str | None = None,
     image_url: str | None = None,
     position: int = 0,
     country: str | None = None,
@@ -72,10 +73,13 @@ def add_candidate(
     if election is None:
         raise ValueError("election not found")
 
+    about_text = about if about is not None else details
+
     candidate = Candidate(
         election_id=election.id,
         name=name.strip(),
         party=party,
+        about=about_text,
         details=details,
         image_url=image_url,
         country=country,

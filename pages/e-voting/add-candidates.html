@@ -11,18 +11,19 @@
     <a class="back-link" href="/pages/e-voting/create-election.html">← Back</a>
     <h2>Add candidates</h2>
     <p id="electionLabel"></p>
-
     <div id="candidateList"></div>
 
     <div class="card">
       <label>Candidate name *</label>
       <input id="candName" />
-      <label>Party / affiliation</label>
+      <label>Party</label>
       <input id="candParty" />
-      <label>Details</label>
-      <textarea id="candDetails" rows="2"></textarea>
+      <label>About / narration</label>
+      <textarea id="candAbout" rows="3"></textarea>
       <label>Country</label>
       <input id="candCountry" placeholder="NG" />
+      <label>State</label>
+      <input id="candState" />
       <label>LGA</label>
       <input id="candLga" />
       <button class="btn clay" type="button" onclick="addCandidate()">+ Add candidate</button>
@@ -30,7 +31,6 @@
 
     <button class="btn primary" id="finishBtn" onclick="finish()">Finish &amp; publish</button>
     <p class="err" id="error"></p>
-    <p class="ok" id="hint"></p>
   </div>
   <script src="/js/api.js"></script>
   <script>
@@ -38,8 +38,6 @@
     const electionTitle = sessionStorage.getItem("electionTitle") || "Election";
     document.getElementById("electionLabel").textContent = electionTitle;
     let candidates = [];
-    // Local extras until backend has country/lga columns
-    const extras = {};
 
     function escapeHtml(s) {
       return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -47,13 +45,12 @@
 
     function renderList() {
       document.getElementById("candidateList").innerHTML = candidates.map(function (c, i) {
-        const x = extras[c.id] || {};
         return (
           '<div class="card" style="cursor:pointer;" onclick="openCand(\'' + escapeHtml(c.id) + '\')">' +
           "<strong>" + (i + 1) + ". " + escapeHtml(c.name) + "</strong>" +
           '<p style="margin:0.3rem 0 0;font-size:0.85rem;opacity:0.85;">' +
           escapeHtml(c.party || "No party") +
-          (x.country || x.lga ? " · " + escapeHtml([x.country, x.lga].filter(Boolean).join(" / ")) : "") +
+          [c.country, c.state, c.lga].filter(Boolean).map(function (x) { return " · " + escapeHtml(x); }).join("") +
           "</p></div>"
         );
       }).join("");
@@ -62,35 +59,46 @@
     function openCand(id) {
       sessionStorage.setItem("detail_candidate_id", id);
       sessionStorage.setItem("detail_candidate_election_id", electionId);
-      const x = extras[id] || {};
-      sessionStorage.setItem("detail_candidate_extra", JSON.stringify(x));
       window.location.href = "/pages/e-voting/candidate-detail.html";
     }
 
     async function addCandidate() {
       const name = document.getElementById("candName").value.trim();
       const party = document.getElementById("candParty").value.trim();
-      const details = document.getElementById("candDetails").value.trim();
+      const about = document.getElementById("candAbout").value.trim();
       const country = document.getElementById("candCountry").value.trim();
+      const state = document.getElementById("candState").value.trim();
       const lga = document.getElementById("candLga").value.trim();
       const err = document.getElementById("error");
       err.textContent = "";
       if (!name) { err.textContent = "Name required"; return; }
-      if (!electionId) { err.textContent = "No election — start create again"; return; }
+      if (!electionId) { err.textContent = "No election — create again"; return; }
       try {
         const data = await ElectionsAPI.addCandidate({
           election_id: electionId,
           name: name,
           party: party || null,
-          details: details || null
+          about: about || null,
+          details: about || null,
+          country: country || null,
+          state: state || null,
+          lga: lga || null
         });
-        candidates.push({ id: data.id, name: data.name, party: data.party, details: details });
-        extras[data.id] = { country: country, lga: lga, details: details, party: party, name: name };
+        candidates.push({
+          id: data.id,
+          name: data.name,
+          party: data.party,
+          about: data.about,
+          country: data.country,
+          state: data.state,
+          lga: data.lga
+        });
         renderList();
         document.getElementById("candName").value = "";
         document.getElementById("candParty").value = "";
-        document.getElementById("candDetails").value = "";
+        document.getElementById("candAbout").value = "";
         document.getElementById("candLga").value = "";
+        document.getElementById("candState").value = "";
       } catch (e) {
         err.textContent = e.message;
       }
@@ -107,7 +115,6 @@
         const credential = pub.election_id || sessionStorage.getItem("currentElectionCredential") || "";
         sessionStorage.setItem("last_published_credential", credential);
         sessionStorage.setItem("currentElectionCredential", credential);
-        // Stay on host dashboard with credential shown
         window.location.href = "/pages/e-voting/host-dashboard.html";
       } catch (e) {
         err.textContent = e.message;
