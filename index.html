@@ -4,16 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RECCORD DB</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .splash-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+  </style>
 </head>
 <body>
-  <div class="page">
-    <h1>RECCORD DB</h1>
-    <p>Storage • Retrieval • Accountability</p>
-
-    <a href="pages/login.html" class="btn primary">Enter RECCORD</a>
-    <a href="pages/e-voting/entry.html" class="btn secondary">E-Voting</a>
+  <div class="splash-wrap">
+    <div class="brand">RECCORD DB</div>
+    <p class="tagline">Storage · Retrieval · Accountability</p>
   </div>
+  <script>
+    setTimeout(function () {
+      window.location.replace("/pages/landing.html");
+    }, 1800);
+  </script>
 </body>
 </html>

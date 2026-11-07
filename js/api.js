@@ -1,4 +1,3 @@
-// Same origin on Render (API + frontend together)
 const API_BASE = "";
 
 async function api(path, options = {}) {
@@ -15,14 +14,12 @@ async function api(path, options = {}) {
   if (config.body && typeof config.body === "object") {
     config.body = JSON.stringify(config.body);
   }
-
   let res;
   try {
     res = await fetch(url, config);
   } catch (err) {
     throw new Error("Network error: cannot reach API");
   }
-
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const message = data.detail || data.message || ("HTTP " + res.status);
@@ -38,7 +35,38 @@ const AuthAPI = {
   organisationLogin(p) { return api("/auth/organisation/login", { method: "POST", body: p }); },
   workerRoles(p) { return api("/auth/worker/roles", { method: "POST", body: p }); },
   workerRegister(p) { return api("/auth/worker/register", { method: "POST", body: p }); },
-  workerLogin(p) { return api("/auth/worker/login", { method: "POST", body: p }); }
+  workerLogin(p) { return api("/auth/worker/login", { method: "POST", body: p }); },
+
+  /** Single login: try regular (username), then org (phone), then worker (phone). */
+  async loginAny(identifier, password) {
+    const id = (identifier || "").trim();
+    const pw = password || "";
+    if (!id || !pw) throw new Error("Enter your credentials");
+
+    const looksPhone = /^\+?\d[\d\s-]{7,}$/.test(id.replace(/\s/g, ""));
+
+    const attempts = looksPhone
+      ? [
+          () => AuthAPI.organisationLogin({ phone: id, password: pw }),
+          () => AuthAPI.workerLogin({ worker_phone: id, worker_password: pw }),
+          () => AuthAPI.regularLogin({ username: id, password: pw })
+        ]
+      : [
+          () => AuthAPI.regularLogin({ username: id, password: pw }),
+          () => AuthAPI.organisationLogin({ phone: id, password: pw }),
+          () => AuthAPI.workerLogin({ worker_phone: id, worker_password: pw })
+        ];
+
+    let lastErr = "Invalid credentials";
+    for (const fn of attempts) {
+      try {
+        return await fn();
+      } catch (e) {
+        lastErr = e.message || lastErr;
+      }
+    }
+    throw new Error(lastErr);
+  }
 };
 
 const ObjectsAPI = {
@@ -48,10 +76,7 @@ const ObjectsAPI = {
 
 const NarrationsAPI = {
   create(objectId, content) {
-    return api("/narrations", {
-      method: "POST",
-      body: { object_id: objectId, content }
-    });
+    return api("/narrations", { method: "POST", body: { object_id: objectId, content } });
   }
 };
 
@@ -68,7 +93,7 @@ const ElectionsAPI = {
   registerVoter(p) { return api("/elections/voters/register", { method: "POST", body: p }); },
   castVote(p) { return api("/elections/vote", { method: "POST", body: p }); },
   getResults(id) { return api("/elections/" + id + "/results"); },
-  listHostElections(phone) { return api("/elections/host/" + phone); }
+  listHostElections(phone) { return api("/elections/host/" + encodeURIComponent(phone)); }
 };
 
 function saveSession(data) {
@@ -81,12 +106,6 @@ function saveSession(data) {
 }
 
 function clearSession() {
-  [
-    "reccord_token",
-    "reccord_account_type",
-    "reccord_user",
-    "reccord_organisation",
-    "reccord_worker",
-    "reccord_worker_credential"
-  ].forEach(function (k) { localStorage.removeItem(k); });
+  ["reccord_token","reccord_account_type","reccord_user","reccord_organisation","reccord_worker","reccord_worker_credential"]
+    .forEach(function (k) { localStorage.removeItem(k); });
 }

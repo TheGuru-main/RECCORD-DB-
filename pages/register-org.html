@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organisation signup — RECCORD DB</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <a class="back-link" href="/pages/landing.html">← Back</a>
+    <h2>Organisation</h2>
+    <p>Admin account for your organisation.</p>
+
+    <label>Business name *</label>
+    <input id="business_name" />
+    <label>Display name *</label>
+    <input id="display_name" />
+    <label>Country (code) *</label>
+    <input id="country" value="NG" maxlength="2" />
+    <label>Phone *</label>
+    <input id="phone" type="tel" placeholder="+234…" />
+    <label>Organisation type</label>
+    <select id="org_type">
+      <option value="">Select…</option>
+      <option>School</option>
+      <option>Hospital / Clinic</option>
+      <option>Hotel</option>
+      <option>Restaurant / Eatery</option>
+      <option>Bar</option>
+      <option>Bakery</option>
+      <option>Retail / POS</option>
+      <option>Filling Station</option>
+      <option>Government House</option>
+      <option>Office / General</option>
+      <option>Other</option>
+    </select>
+    <label>Password *</label>
+    <input id="password" type="password" />
+
+    <button class="btn primary" id="btn" onclick="submit()">Create organisation</button>
+    <p class="err" id="error"></p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    async function submit() {
+      const business_name = document.getElementById("business_name").value.trim();
+      const display_name = document.getElementById("display_name").value.trim();
+      const country = (document.getElementById("country").value.trim() || "NG").toUpperCase();
+      const phone = document.getElementById("phone").value.trim();
+      const password = document.getElementById("password").value;
+      const orgType = document.getElementById("org_type").value;
+      const err = document.getElementById("error");
+      const btn = document.getElementById("btn");
+      err.textContent = "";
+      if (!business_name || !display_name || !phone || !password) {
+        err.textContent = "Required fields missing";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Creating…";
+      try {
+        const data = await AuthAPI.organisationSignup({
+          business_name, display_name, country, phone, language: "en", password
+        });
+        saveSession(data);
+        if (orgType) localStorage.setItem("reccord_org_type", orgType);
+        if (data.worker_credential) {
+          sessionStorage.setItem("just_worker_credential", data.worker_credential);
+          window.location.href = "/pages/org-credential.html";
+        } else {
+          window.location.href = "/pages/home.html";
+        }
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false;
+        btn.textContent = "Create organisation";
+      }
+    }
+  </script>
+</body>
+</html>

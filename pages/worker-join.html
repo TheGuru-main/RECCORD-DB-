@@ -3,97 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Join as Worker — RECCORD DB</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../css/style.css" />
+  <title>Worker signup — RECCORD DB</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <div class="page" style="padding-top:1.5rem;">
+  <div class="page">
+    <a class="back-link" href="/pages/landing.html">← Back</a>
     <h2>Join as Worker</h2>
-    <p>Enter the Worker Credential from your organisation Admin.</p>
+    <p>Enter the Worker Credential from your organisation admin.</p>
 
     <div id="step1">
       <label>Worker Credential *</label>
-      <input type="text" id="credential" placeholder="Paste credential" />
+      <input id="credential" />
       <button class="btn primary" id="checkBtn" onclick="checkCredential()">Continue</button>
     </div>
 
     <div id="step2" style="display:none;">
       <div class="card">
         <strong id="orgName">—</strong>
-        <p style="margin:0.3rem 0 0;font-size:0.9rem;color:#94a3b8;">Select your role and register</p>
+        <p style="margin:0.35rem 0 0;font-size:0.9rem;">Select role and register</p>
       </div>
       <label>Role *</label>
       <select id="role"></select>
-      <label>Full Name *</label>
-      <input type="text" id="name" placeholder="Your name" />
-      <label>Phone Number *</label>
-      <input type="tel" id="phone" placeholder="+234..." />
+      <label>Full name *</label>
+      <input id="name" />
+      <label>Phone *</label>
+      <input id="phone" type="tel" placeholder="+234…" />
       <label>Password *</label>
-      <input type="password" id="password" placeholder="Create password" />
-      <button class="btn primary" id="regBtn" onclick="register()">Submit for Approval</button>
+      <input id="password" type="password" />
+      <button class="btn primary" id="regBtn" onclick="register()">Submit for approval</button>
     </div>
 
-    <p id="error" style="color:#f87171;"></p>
-    <p id="success" style="color:#4ade80;"></p>
-    <a href="login.html" class="btn">← Back to Login</a>
+    <p class="err" id="error"></p>
+    <p class="ok" id="success"></p>
+    <a class="btn ghost" href="/pages/login.html">Already approved? Log in</a>
   </div>
-
-  <script src="../js/api.js"></script>
+  <script src="/js/api.js"></script>
   <script>
-    let currentCredential = '';
-
+    let currentCredential = "";
     async function checkCredential() {
-      const credential = document.getElementById('credential').value.trim();
-      const errorEl = document.getElementById('error');
-      const btn = document.getElementById('checkBtn');
-      errorEl.textContent = '';
-      if (!credential) { errorEl.textContent = 'Credential is required'; return; }
-      btn.disabled = true; btn.textContent = 'Checking...';
+      const credential = document.getElementById("credential").value.trim();
+      const errorEl = document.getElementById("error");
+      const btn = document.getElementById("checkBtn");
+      errorEl.textContent = "";
+      if (!credential) { errorEl.textContent = "Credential required"; return; }
+      btn.disabled = true; btn.textContent = "Checking…";
       try {
         const data = await AuthAPI.workerRoles({ worker_credential: credential });
         currentCredential = credential;
-        document.getElementById('orgName').textContent =
+        document.getElementById("orgName").textContent =
           data.organisation.display_name || data.organisation.business_name;
-        const roleSelect = document.getElementById('role');
-        roleSelect.innerHTML = (data.roles || []).map(r =>
-          `<option value="\( {r.name}"> \){r.name}</option>`
-        ).join('') || '<option value="">No roles available</option>';
-        document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'block';
-      } catch (err) {
-        errorEl.textContent = err.message;
-        btn.disabled = false; btn.textContent = 'Continue';
+        const roleSelect = document.getElementById("role");
+        const roles = data.roles || [];
+        roleSelect.innerHTML = roles.length
+          ? roles.map(function (r) { return '<option value="' + r.name + '">' + r.name + "</option>"; }).join("")
+          : '<option value="">No roles — ask admin to create roles</option>';
+        document.getElementById("step1").style.display = "none";
+        document.getElementById("step2").style.display = "block";
+      } catch (e) {
+        errorEl.textContent = e.message;
+        btn.disabled = false; btn.textContent = "Continue";
       }
     }
-
     async function register() {
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const password = document.getElementById('password').value;
-      const role = document.getElementById('role').value;
-      const errorEl = document.getElementById('error');
-      const successEl = document.getElementById('success');
-      const btn = document.getElementById('regBtn');
-      errorEl.textContent = ''; successEl.textContent = '';
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const errorEl = document.getElementById("error");
+      const successEl = document.getElementById("success");
+      const btn = document.getElementById("regBtn");
+      errorEl.textContent = ""; successEl.textContent = "";
       if (!name || !phone || !password || !role) {
-        errorEl.textContent = 'All fields are required';
+        errorEl.textContent = "All fields required";
         return;
       }
-      btn.disabled = true; btn.textContent = 'Submitting...';
+      btn.disabled = true; btn.textContent = "Submitting…";
       try {
         await AuthAPI.workerRegister({
           worker_credential: currentCredential,
           worker_phone: phone,
           worker_password: password,
-          name,
-          role
+          name: name,
+          role: role
         });
-        successEl.textContent = 'Registered. Status: Pending. Wait for Admin approval, then login.';
-        btn.textContent = 'Submitted';
-      } catch (err) {
-        errorEl.textContent = err.message;
-        btn.disabled = false; btn.textContent = 'Submit for Approval';
+        successEl.textContent = "Submitted. Status: Pending. After admin approves, use Log in.";
+        btn.textContent = "Submitted";
+      } catch (e) {
+        errorEl.textContent = e.message;
+        btn.disabled = false; btn.textContent = "Submit for approval";
       }
     }
   </script>

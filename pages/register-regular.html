@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regular signup — RECCORD DB</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <a class="back-link" href="/pages/landing.html">← Back</a>
+    <h2>Regular User</h2>
+    <p>Create a personal RECCORD account.</p>
+
+    <label>Username *</label>
+    <input id="username" autocomplete="username" />
+    <label>Full name *</label>
+    <input id="name" />
+    <label>Phone *</label>
+    <input id="phone" type="tel" placeholder="+234…" />
+    <label>Password *</label>
+    <input id="password" type="password" />
+
+    <button class="btn primary" id="btn" onclick="submit()">Create account</button>
+    <p class="err" id="error"></p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    async function submit() {
+      const username = document.getElementById("username").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const password = document.getElementById("password").value;
+      const err = document.getElementById("error");
+      const btn = document.getElementById("btn");
+      err.textContent = "";
+      if (!username || !name || !phone || !password) {
+        err.textContent = "All fields are required";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Creating…";
+      try {
+        const data = await AuthAPI.regularSignup({ username, name, phone, password });
+        saveSession(data);
+        window.location.href = "/pages/home.html";
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false;
+        btn.textContent = "Create account";
+      }
+    }
+  </script>
+</body>
+</html>
