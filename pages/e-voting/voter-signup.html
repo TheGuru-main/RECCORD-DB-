@@ -39,18 +39,36 @@
       const lga = document.getElementById("lga").value.trim();
       const err = document.getElementById("error");
       const btn = document.getElementById("btn");
+
       if (!election_credential || !full_name || !phone || !identity_number || !country || !lga) {
         err.textContent = "Fill required fields";
         return;
       }
+
       btn.disabled = true;
+      err.textContent = "";
+
       try {
         const data = await ElectionsAPI.registerVoter({
-          election_credential, full_name, phone, identity_number,
-          country, state: state || null, lga
+          election_credential: election_credential,
+          full_name: full_name,
+          phone: phone,
+          identity_number: identity_number,
+          country: country,
+          state: state || null,
+          lga: lga
         });
+
         sessionStorage.setItem("voterId", data.voter_id);
         sessionStorage.setItem("electionCredential", election_credential);
+
+        const el = await ElectionsAPI.getByCredential(election_credential);
+        sessionStorage.setItem("voteElectionUuid", el.id);
+        sessionStorage.setItem("electionCredential", election_credential);
+        if (el.title) {
+          sessionStorage.setItem("electionTitle", el.title);
+        }
+
         window.location.href = "/pages/e-voting/voting.html";
       } catch (e) {
         err.textContent = e.message;
