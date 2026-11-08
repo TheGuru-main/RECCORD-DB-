@@ -10,35 +10,39 @@
   <div class="page">
     <a class="back-link" href="/pages/landing.html">← Back</a>
     <h2>Log in</h2>
-    <p>Use the credentials for your RECCORD account (Regular, Organisation, or Worker).</p>
-
-    <label>Username or phone</label>
-    <input type="text" id="identifier" placeholder="Username or +234…" autocomplete="username" />
-
-    <label>Password</label>
-    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-
+    <p>Use your phone number and password.</p>
+    <label>Phone *</label>
+    <input id="identifier" type="tel" placeholder="+234…" />
+    <label>Password *</label>
+    <input id="password" type="password" />
     <button class="btn primary" id="btn" onclick="doLogin()">Log in</button>
     <p class="err" id="error"></p>
   </div>
   <script src="/js/api.js"></script>
   <script>
     async function doLogin() {
-      const identifier = document.getElementById("identifier").value;
+      const phone = document.getElementById("identifier").value.trim();
       const password = document.getElementById("password").value;
       const err = document.getElementById("error");
       const btn = document.getElementById("btn");
       err.textContent = "";
       btn.disabled = true;
-      btn.textContent = "Signing in…";
       try {
-        const data = await AuthAPI.loginAny(identifier, password);
+        let data;
+        try {
+          data = await AuthAPI.regularLogin({ phone: phone, password: password });
+        } catch (e1) {
+          try {
+            data = await AuthAPI.organisationLogin({ phone: phone, password: password });
+          } catch (e2) {
+            data = await AuthAPI.workerLogin({ worker_phone: phone, worker_password: password });
+          }
+        }
         saveSession(data);
         window.location.href = "/pages/home.html";
       } catch (e) {
         err.textContent = e.message;
         btn.disabled = false;
-        btn.textContent = "Log in";
       }
     }
   </script>

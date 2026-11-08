@@ -4,28 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>New Commit — RECCORD DB</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <div class="page">
     <a class="back-link" href="/pages/home.html">← Back</a>
     <h2>New Commit</h2>
-    <label>Object / Title *</label>
-    <input type="text" id="objectName" placeholder="What are you recording?" />
-    <label>Narration</label>
-    <textarea id="narration" rows="5" placeholder="Details…"></textarea>
-    <label>Record type</label>
-    <select id="recordType">
-      <option value="append">Append only</option>
-      <option value="mutable">Mutable</option>
-      <option value="immutable">Immutable</option>
-    </select>
-    <label>Media (image, audio, video, document — stored on your tenant B2 path)</label>
-    <input type="file" id="media" accept="image/*,audio/*,video/*,.pdf,.doc,.docx" />
+    <label>Object name *</label>
+    <input id="objectName" placeholder="Title only" />
+    <label>Description</label>
+    <textarea id="description" rows="4" placeholder="Description (shown in its own box)"></textarea>
+    <label>Media (optional)</label>
+    <input type="file" id="media" accept="image/*,audio/*,video/*,.pdf" />
     <button class="btn primary" id="submitBtn" onclick="submitCommit()">Commit</button>
     <p class="err" id="error"></p>
-    <p class="ok" id="success"></p>
   </div>
   <script src="/js/api.js"></script>
   <script src="/js/shell.js"></script>
@@ -34,35 +26,37 @@
 
     function readFileAsBase64(file) {
       return new Promise(function (resolve, reject) {
-        const reader = new FileReader();
-        reader.onload = function () { resolve(reader.result); };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+        const r = new FileReader();
+        r.onload = function () { resolve(r.result); };
+        r.onerror = reject;
+        r.readAsDataURL(file);
       });
     }
 
     async function submitCommit() {
       const name = document.getElementById("objectName").value.trim();
-      const content = document.getElementById("narration").value.trim();
+      const description = document.getElementById("description").value.trim();
       const fileInput = document.getElementById("media");
       const err = document.getElementById("error");
-      const ok = document.getElementById("success");
       const btn = document.getElementById("submitBtn");
       err.textContent = "";
-      ok.textContent = "";
-      if (!name) { err.textContent = "Title required"; return; }
+      if (!name) { err.textContent = "Object name required"; return; }
       btn.disabled = true;
       btn.textContent = "Committing…";
       try {
-        const obj = await ObjectsAPI.create(name);
-        if (content) await NarrationsAPI.create(obj.id, content);
+        const obj = await api("/objects", {
+          method: "POST",
+          body: { name: name, description: description || null }
+        });
+        if (description) {
+          try { await NarrationsAPI.create(obj.id, description); } catch (e) {}
+        }
         const file = fileInput.files && fileInput.files[0];
         if (file && typeof MediaAPI !== "undefined") {
           const dataUrl = await readFileAsBase64(file);
           await MediaAPI.upload(obj.id, file.name, file.type || "application/octet-stream", dataUrl);
         }
-        ok.textContent = "Saved.";
-        setTimeout(function () { window.location.href = "/pages/home.html"; }, 600);
+        window.location.href = "/pages/home.html";
       } catch (e) {
         err.textContent = e.message;
         btn.disabled = false;

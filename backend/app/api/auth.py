@@ -28,14 +28,14 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 class RegularSignupRequest(BaseModel):
-    username: str
     name: str
-    phone: str | None = None
+    phone: str
     password: str
 
 
 class RegularLoginRequest(BaseModel):
-    username: str
+    phone: str | None = None
+    username: str | None = None  # legacy; prefer phone
     password: str
 
 
@@ -158,7 +158,6 @@ def regular_signup(
     try:
         result = signup_regular_user(
             db,
-            username=payload.username,
             name=payload.name,
             phone=payload.phone,
             password=payload.password,
@@ -193,13 +192,14 @@ def regular_login(
     result = login_regular_user(
         db,
         username=payload.username,
+        phone=payload.phone,
         password=payload.password,
     )
 
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid username or password",
+            detail="invalid phone number or password",
         )
 
     return {

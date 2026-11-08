@@ -7,45 +7,41 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
-    .stat-card {
-      background: rgba(26,10,12,0.55); border: 1px solid rgba(196,164,132,0.35);
-      border-radius: 14px; padding: 0.9rem; text-align: center;
-    }
-    .stat-card strong { display: block; font-size: 1.25rem; color: #fbbf24; }
-    .stat-card span { font-size: 0.8rem; opacity: 0.85; }
-    .section-title {
-      font-size: 0.85rem; opacity: 0.85; margin: 1.1rem 0 0.45rem;
-      text-transform: uppercase; letter-spacing: 0.04em;
-    }
-    .vibrant-grid {
+    .full-grid {
       display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 3px;
-      padding: 8px;
-      border-radius: 14px;
+      grid-template-columns: repeat(64, minmax(0, 1fr));
+      gap: 1px;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 6px;
+      border-radius: 12px;
+      background: rgba(10,4,8,0.75);
       border: 1px solid rgba(196,164,132,0.35);
-      background: rgba(10, 4, 8, 0.65);
-      max-height: 220px;
-      overflow: hidden;
     }
-    .vibrant-grid button {
+    .full-grid button {
+      width: 100%;
       aspect-ratio: 1;
+      min-width: 4px;
       border: none;
-      border-radius: 4px;
       padding: 0;
-      cursor: default;
-      background: rgba(75, 20, 40, 0.5);
+      border-radius: 1px;
+      background: rgba(60, 20, 35, 0.55);
     }
-    .vibrant-grid button.filled {
+    .full-grid button.filled {
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      box-shadow: 0 0 4px rgba(251,191,36,0.45);
     }
-    .vibrant-grid button.c0 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
-    .vibrant-grid button.c1 { background: linear-gradient(135deg, #22d3ee, #6366f1); }
-    .vibrant-grid button.c2 { background: linear-gradient(135deg, #a3e635, #14b8a6); }
-    .vibrant-grid button.c3 { background: linear-gradient(135deg, #e879f9, #f43f5e); }
-    .vibrant-grid button.c4 { background: linear-gradient(135deg, #fbbf24, #c4a484); }
+    .desc-box {
+      margin-top: 0.35rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.25);
+      font-size: 0.85rem;
+      opacity: 0.95;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -58,7 +54,6 @@
   <aside class="side-drawer" id="sideDrawer">
     <a href="/pages/home.html" class="active">Workspace</a>
     <a href="/pages/lookup.html">Lookup</a>
-    <a href="/pages/messages.html">Messages</a>
     <a href="/pages/records.html">Records</a>
     <a href="/pages/profile.html">Profile</a>
     <a href="#" onclick="logout()" style="color:#fecaca;">Logout</a>
@@ -66,16 +61,11 @@
 
   <div class="page with-chrome">
     <p id="welcomeText">Welcome</p>
-    <div class="stats">
-      <div class="stat-card"><strong id="commitCount">0</strong><span>Placements</span></div>
-      <div class="stat-card"><strong id="roleLabel">—</strong><span>Account</span></div>
-    </div>
+    <div class="section-title" style="margin-top:0.5rem;">54 × 64 placement grid</div>
+    <div class="full-grid" id="grid"></div>
+    <p id="gridMeta" style="font-size:0.8rem;opacity:0.75;margin-top:0.4rem;"></p>
 
-    <div class="section-title">Tenant placement grid</div>
-    <div class="vibrant-grid" id="grid"></div>
-    <p id="gridMeta" style="font-size:0.8rem;opacity:0.75;margin-top:0.4rem;">Loading grid…</p>
-
-    <div class="section-title">Recent placements</div>
+    <div class="section-title">Records</div>
     <div id="recentList"></div>
     <p class="err" id="error"></p>
   </div>
@@ -96,9 +86,6 @@
     const name = typeof getDisplayName === "function" ? getDisplayName() : "User";
     document.getElementById("headerName").textContent = name;
     document.getElementById("welcomeText").textContent = "Welcome, " + name;
-    const type = localStorage.getItem("reccord_account_type") || "";
-    document.getElementById("roleLabel").textContent =
-      type === "organisation" ? "Admin" : type === "worker" ? "Worker" : "Regular";
 
     function escapeHtml(s) {
       return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -110,58 +97,61 @@
       const listEl = document.getElementById("recentList");
       try {
         const meta = await GridAPI.getMine();
-        const placements = meta.placements || [];
-        document.getElementById("commitCount").textContent = String(placements.length);
+        const rows = meta.rows || 54;
+        const cols = meta.cols || 64;
+        const cells = meta.cells || {};
+        const total = rows * cols;
+        window.__cells = cells;
 
-        const cells = 96;
         let html = "";
-        for (let i = 0; i < cells; i++) {
-          const p = placements[i];
-          if (p) {
-            const cls = "filled c" + (i % 5);
-            html += '<button type="button" class="' + cls + '" title="' +
-              escapeHtml(p.object_name || "") +
-              '" onclick="openPlacement(' + i + ')"></button>';
+        for (let i = 0; i < total; i++) {
+          const cell = cells[String(i)];
+          if (cell) {
+            html += '<button type="button" class="filled" title="' +
+              escapeHtml(cell.object_name || "") +
+              '" onclick="openCell(' + i + ')"></button>';
           } else {
-            html += "<button type=\"button\" disabled></button>";
+            html += '<button type="button" disabled></button>';
           }
         }
         grid.innerHTML = html;
-        window.__placements = placements;
+        metaEl.textContent = rows + "×" + cols + " · " + (meta.storage || "");
 
-        metaEl.textContent =
-          (meta.rows || 54) + "×" + (meta.cols || 64) +
-          " · " + (meta.storage || "—") +
-          (meta.updated_at ? " · " + new Date(meta.updated_at).toLocaleString() : "");
-
-        if (!placements.length) {
-          listEl.innerHTML = '<div class="card"><p style="margin:0;opacity:0.85;">No placements yet. Commit to place on your tenant grid (B2).</p></div>';
-        } else {
-          listEl.innerHTML = placements.slice(0, 12).map(function (p, idx) {
-            return (
-              '<div class="card" style="cursor:pointer;" onclick="openPlacement(' + idx + ')">' +
-              "<strong>" + escapeHtml(p.object_name || p.placement_id) + "</strong>" +
-              '<p style="margin:0.25rem 0 0;font-size:0.8rem;opacity:0.85;">' +
-              (p.created_at ? new Date(p.created_at).toLocaleString() : "") +
-              (p.gsp_key ? " · " + escapeHtml(String(p.gsp_key).slice(0, 36)) : "") +
-              "</p></div>"
-            );
-          }).join("");
-        }
+        const placements = meta.placements || [];
+        listEl.innerHTML = placements.length
+          ? placements.map(function (p) {
+              const desc = p.description || "";
+              return (
+                '<div class="card" style="cursor:pointer;" onclick="openByObject(\'' +
+                escapeHtml(p.object_id) + '\',\'' + escapeHtml(p.object_name) + '\',\'' +
+                escapeHtml(desc).replace(/'/g, "&#39;") + '\')">' +
+                "<strong>" + escapeHtml(p.object_name) + "</strong>" +
+                (desc
+                  ? '<div class="desc-box">' + escapeHtml(desc) + "</div>"
+                  : "") +
+                "</div>"
+              );
+            }).join("")
+          : '<div class="card"><p style="margin:0;opacity:0.85;">No placements yet.</p></div>';
       } catch (e) {
-        metaEl.textContent = "Grid: " + e.message;
         document.getElementById("error").textContent = e.message;
       }
     }
 
-    function openPlacement(idx) {
-      const p = (window.__placements || [])[idx];
-      if (!p) return;
-      sessionStorage.setItem("detail_placement", JSON.stringify(p));
-      if (p.object_id) sessionStorage.setItem("detail_object_id", p.object_id);
+    function openCell(i) {
+      const cell = (window.__cells || {})[String(i)];
+      if (!cell) return;
+      sessionStorage.setItem("detail_placement", JSON.stringify(cell));
+      if (cell.object_id) sessionStorage.setItem("detail_object_id", cell.object_id);
       window.location.href = "/pages/commit-detail.html";
     }
-
+    function openByObject(id, name, desc) {
+      sessionStorage.setItem("detail_placement", JSON.stringify({
+        object_id: id, object_name: name, description: desc
+      }));
+      sessionStorage.setItem("detail_object_id", id);
+      window.location.href = "/pages/commit-detail.html";
+    }
     loadGrid();
   </script>
 </body>
