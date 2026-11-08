@@ -1,77 +1,100 @@
-"""RECCORD DB placement service."""
+"""Placement service — signup vs object vs vote (not mixed)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.core.gsp import GSPPlacement, gsp_place, normalize_name
-from app.core.identity import require_phone_uid
+from app.core.gsp import GSPPlacement, place_object, place_user_signup, place_vote
+
+
+def place_regular_user_signup(
+    *,
+    phone_uid: str,
+    full_name: str,
+    language: str | None = "en",
+) -> GSPPlacement:
+    return place_user_signup(
+        account_type="regular",
+        phone_uid=phone_uid,
+        full_name=full_name,
+        language=language,
+    )
+
+
+def place_organisation_signup(
+    *,
+    phone_uid: str,
+    org_display_name: str,
+    language: str | None = "en",
+) -> GSPPlacement:
+    """Org fixed face from org name + org phone at signup."""
+    return place_user_signup(
+        account_type="organisation",
+        phone_uid=phone_uid,
+        full_name=org_display_name,
+        language=language,
+    )
+
+
+def place_regular_object(
+    *,
+    user_phone_uid: str,
+    object_name: str,
+    language: str | None = "en",
+) -> GSPPlacement:
+    return place_object(
+        account_type="regular",
+        account_phone_uid=user_phone_uid,
+        object_name=object_name,
+        language=language,
+    )
+
+
+def place_organisation_object(
+    *,
+    organisation_phone_uid: str,
+    object_name: str,
+    language: str | None = "en",
+) -> GSPPlacement:
+    """Worker and org admin both place on org grid (org phone uID)."""
+    return place_object(
+        account_type="organisation",
+        account_phone_uid=organisation_phone_uid,
+        object_name=object_name,
+        language=language,
+    )
 
 
 @dataclass(frozen=True)
 class VotePlacement:
-    """Placement result for an E-Voting vote (primary + 5 replicas)."""
-
     primary_key: str
-    replicas: list[str]          # exactly 5 replica keys
+    replicas: list[str]
     voter_name: str
     voter_phone: str
+    start_row: int
+    start_col: int
+    cell_index: int
+    splits: list[dict]
 
 
-def place_regular_commit(
-    *,
-    account_uid: str,
-    object_name: str,
-) -> GSPPlacement:
-    """Calculate placement using the regular account's established uID."""
-    return gsp_place(
-        account_type="regular",
-        account_uid=account_uid,
-        name=object_name,
-    )
-
-
-def place_organisation_commit(
-    *,
-    account_uid: str,
-    object_name: str,
-) -> GSPPlacement:
-    """Calculate placement using the organisation's established uID."""
-    return gsp_place(
-        account_type="organisation",
-        account_uid=account_uid,
-        name=object_name,
-    )
-
-
-def place_vote(
+def place_vote_commit(
     *,
     voter_name: str,
     voter_phone: str,
+    language: str | None = "en",
 ) -> VotePlacement:
-    """
-    Place a vote using voter Name + uID.
-
-    Creates 1 primary key + 5 replica keys.
-    All keys are deterministic from the voter identity.
-    """
-    phone = require_phone_uid(voter_phone, field="voter_phone")
-    name = normalize_name(voter_name)
-
-    primary_key = f"vote:{name}:{phone}"
-
-    # 5 deterministic replicas
-    replicas = [
-        f"vote:{name}:{phone}:r1",
-        f"vote:{name}:{phone}:r2",
-        f"vote:{name}:{phone}:r3",
-        f"vote:{name}:{phone}:r4",
-        f"vote:{name}:{phone}:r5",
-    ]
-
+    g = place_vote(
+        voter_name=voter_name,
+        voter_phone=voter_phone,
+        language=language,
+    )
     return VotePlacement(
-        primary_key=primary_key,
-        replicas=replicas,
+        primary_key=g.key,
+        replicas=[f"{g.key}:r{k}" for k in range(1, 6)],
         voter_name=voter_name.strip(),
-        voter_phone=phone,
+        voter_phone=g.account_uid,
+        start_row=g.start_row,
+        start_col=g.start_col,
+        cell_index=g.cell_index,
+        splits=[{"k": k, "row": row, "col": col} for k, row, col in g.splits],
     )

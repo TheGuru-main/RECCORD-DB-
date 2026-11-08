@@ -10,7 +10,7 @@ from app.models.election import Election
 from app.models.election_voter import ElectionVoter
 from app.models.user import User
 from app.models.vote import Vote
-from app.services.placement_service import place_vote
+from app.services.placement_service import place_vote_commit
 
 
 def _phone_exists_in_main_reccord(db: Session, phone: str) -> bool:
@@ -103,7 +103,10 @@ def cast_vote(db: Session, *, voter_id: str, candidate_id: str) -> Vote:
     if candidate is None:
         raise ValueError("candidate not found in this election")
 
-    placement = place_vote(voter_name=voter.full_name, voter_phone=voter.phone)
+    placement = place_vote_commit(
+        voter_name=voter.full_name,
+        voter_phone=voter.phone,
+    )
     vote = Vote(
         election_id=election.id,
         candidate_id=candidate.id,

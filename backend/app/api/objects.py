@@ -23,6 +23,7 @@ router = APIRouter(prefix="/objects", tags=["objects"])
 class ObjectCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
+    language: str | None = "en"
 
 
 def _require_account_context(
@@ -30,7 +31,7 @@ def _require_account_context(
 ) -> tuple[uuid.UUID | None, uuid.UUID | None]:
     if principal.account_type == "regular" and principal.user is not None:
         return principal.user.id, None
-    if principal.account_type == "organisation" and principal.organisation is not None:
+    if principal.account_type in ("organisation", "worker") and principal.organisation is not None:
         return None, principal.organisation.id
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
@@ -59,26 +60,30 @@ def create_object_endpoint(
         db.rollback()
         raise
 
+    lang = (payload.language or "en").strip() or "en"
     try:
         if principal.account_type == "regular" and principal.user is not None:
             phone = require_phone_uid(principal.user.phone, field="phone")
             write_object_placement(
                 kind="regular",
                 tenant_id=str(principal.user.id),
-                account_uid=phone,
+                account_phone_uid=phone,
                 object_id=str(record.id),
                 object_name=record.name,
                 description=payload.description,
+                language=lang,
             )
-        elif principal.account_type == "organisation" and principal.organisation is not None:
+        elif principal.organisation is not None:
+            # organisation admin and worker → org phone only (org grid fixed)
             phone = require_phone_uid(principal.organisation.phone, field="phone")
             write_object_placement(
                 kind="organisation",
                 tenant_id=str(principal.organisation.id),
-                account_uid=phone,
+                account_phone_uid=phone,
                 object_id=str(record.id),
                 object_name=record.name,
                 description=payload.description,
+                language=lang,
             )
     except Exception as exc:
         logger.exception("B2 grid placement failed: %s", exc)

@@ -7,11 +7,15 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.gsp import GSPPlacement, gsp_place
+from app.core.gsp import GSPPlacement
 from app.core.identity import require_phone_uid
 from app.models.organisation import Organisation
 from app.models.user import User
 from app.services.auth_service import hash_password, verify_password
+from app.services.placement_service import (
+    place_organisation_signup,
+    place_regular_user_signup,
+)
 from app.services.token_service import create_access_token
 from app.services.worker_credential_service import (
     build_worker_credential_identity,
@@ -37,6 +41,7 @@ class OrganisationSignupResult:
     organisation: Organisation
     access_token: str
     worker_credential: str
+    placement: GSPPlacement
 
 
 @dataclass(frozen=True)
@@ -52,11 +57,11 @@ def signup_regular_user(
     phone: str,
     password: str,
     username: str | None = None,
+    language: str | None = "en",
 ) -> RegularSignupResult:
-    """Phone is the identity uID. No separate public username required."""
+    """Phone is identity uID. Signup placement uses fullname + phone only."""
     name = (name or "").strip()
     phone = require_phone_uid(phone, field="phone")
-    # Internal username slot = phone (unique), not a second identity
     username = phone
 
     if not name:
@@ -64,12 +69,9 @@ def signup_regular_user(
     if not password:
         raise ValueError("password must not be empty")
 
-    existing_phone = db.scalar(select(User.id).where(User.phone == phone).limit(1))
-    if existing_phone is not None:
+    if db.scalar(select(User.id).where(User.phone == phone).limit(1)):
         raise ValueError("phone number is already registered")
-
-    existing_user = db.scalar(select(User).where(User.username == username).limit(1))
-    if existing_user is not None:
+    if db.scalar(select(User.id).where(User.username == username).limit(1)):
         raise ValueError("phone number is already registered")
 
     user = User(
@@ -84,7 +86,11 @@ def signup_regular_user(
     db.add(user)
     db.flush()
 
-    placement = gsp_place(account_type="regular", account_uid=phone, name=name)
+    placement = place_regular_user_signup(
+        phone_uid=phone,
+        full_name=name,
+        language=language or "en",
+    )
     access_token = create_access_token(subject=str(user.id), account_type="regular")
     return RegularSignupResult(user=user, placement=placement, access_token=access_token)
 
@@ -96,7 +102,6 @@ def login_regular_user(
     phone: str | None = None,
     password: str,
 ) -> RegularLoginResult | None:
-    """Login with phone (preferred) or legacy username field holding phone."""
     ident = (phone or username or "").strip()
     if not ident:
         return None
@@ -145,7 +150,7 @@ def signup_organisation(
     display_name = display_name.strip()
     country = country.strip()
     phone = require_phone_uid(phone, field="phone")
-    language = language.strip()
+    language = (language or "en").strip() or "en"
 
     if not business_name:
         raise ValueError("business_name must not be empty")
@@ -153,15 +158,10 @@ def signup_organisation(
         raise ValueError("display_name must not be empty")
     if not country:
         raise ValueError("country must not be empty")
-    if not language:
-        raise ValueError("language must not be empty")
     if not password:
         raise ValueError("password must not be empty")
 
-    existing_organisation = db.scalar(
-        select(Organisation).where(Organisation.phone == phone).limit(1)
-    )
-    if existing_organisation is not None:
+    if db.scalar(select(Organisation).where(Organisation.phone == phone).limit(1)):
         raise ValueError("organisation phone number is already registered")
 
     organisation = Organisation(
@@ -179,11 +179,19 @@ def signup_organisation(
 
     worker_id = generate_worker_id()
     worker_credential = build_worker_credential_identity(
-        organisation=organisation, worker_id=worker_id
+        organisation=organisation,
+        worker_id=worker_id,
     )
     organisation.worker_id = worker_id
     organisation.worker_registration_credential_hash = hash_password(worker_credential)
     db.flush()
+
+    # Org fixed face: org display name + org phone
+    placement = place_organisation_signup(
+        phone_uid=phone,
+        org_display_name=display_name,
+        language=language,
+    )
 
     access_token = create_access_token(
         subject=str(organisation.id),
@@ -194,11 +202,15 @@ def signup_organisation(
         organisation=organisation,
         access_token=access_token,
         worker_credential=worker_credential,
+        placement=placement,
     )
 
 
 def login_organisation(
-    db: Session, *, phone: str, password: str
+    db: Session,
+    *,
+    phone: str,
+    password: str,
 ) -> OrganisationLoginResult | None:
     phone = require_phone_uid(phone, field="phone")
     organisation = db.scalar(select(Organisation).where(Organisation.phone == phone))
