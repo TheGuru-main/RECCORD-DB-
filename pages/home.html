@@ -7,31 +7,83 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
+    .grid-shell {
+      border-radius: 16px;
+      padding: 10px;
+      border: 1px solid rgba(196,164,132,0.4);
+      background:
+        linear-gradient(135deg, rgba(74,14,28,0.85), rgba(167,124,82,0.35)),
+        linear-gradient(347deg, #4a0e1c 0%, #6b1e2a 45%, #a67c52 100%);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .grid-brand {
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      margin: 0 0 0.65rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 999px;
+      color: #fff7f0;
+      background: linear-gradient(90deg, #6b1e2a, #c4a484, #f59e0b, #6b1e2a);
+      background-size: 220% 100%;
+      animation: brand-slide 6s linear infinite;
+    }
+    @keyframes brand-slide {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 220% 50%; }
+    }
+    .grid-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
     .full-grid {
       display: grid;
-      grid-template-columns: repeat(64, minmax(0, 1fr));
-      gap: 1px;
-      width: 100%;
-      max-width: 100%;
-      overflow-x: auto;
+      grid-template-columns: repeat(64, minmax(7px, 1fr));
+      gap: 3px;
+      width: max(100%, 520px);
+      min-width: 100%;
       padding: 6px;
       border-radius: 12px;
-      background: rgba(10,4,8,0.75);
-      border: 1px solid rgba(196,164,132,0.35);
+      background: rgba(10,4,8,0.55);
+    }
+    @media (min-width: 480px) {
+      .full-grid {
+        grid-template-columns: repeat(64, minmax(8px, 1fr));
+        gap: 4px;
+        width: max(100%, 640px);
+      }
+    }
+    @media (min-width: 768px) {
+      .full-grid {
+        grid-template-columns: repeat(64, minmax(10px, 1fr));
+        gap: 5px;
+        width: 100%;
+      }
     }
     .full-grid button {
       width: 100%;
       aspect-ratio: 1;
-      min-width: 4px;
+      min-width: 7px;
       border: none;
       padding: 0;
-      border-radius: 1px;
+      border-radius: 2px;
       background: rgba(60, 20, 35, 0.55);
     }
     .full-grid button.filled {
       cursor: pointer;
-      background: linear-gradient(135deg, #f59e0b, #ef4444);
-      box-shadow: 0 0 4px rgba(251,191,36,0.45);
+      background: linear-gradient(135deg, #f59e0b, #ef4444, #e879f9);
+      background-size: 180% 180%;
+      animation: cell-glow 4s ease infinite;
+      box-shadow: 0 0 6px rgba(251,191,36,0.5);
+    }
+    @keyframes cell-glow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
     .desc-box {
       margin-top: 0.35rem;
@@ -67,7 +119,13 @@
     <a class="btn primary" id="orgDashBtn" href="/pages/org-dashboard.html" style="display:none;margin-bottom:1rem;">Dashboard</a>
 
     <div class="section-title" style="margin-top:0.5rem;">54 × 64 placement grid</div>
-    <div class="full-grid" id="grid"></div>
+
+    <div class="grid-shell">
+      <p class="grid-brand">powered by GuruInnovations🌀</p>
+      <div class="grid-scroll">
+        <div class="full-grid" id="grid"></div>
+      </div>
+    </div>
     <p id="gridMeta" style="font-size:0.8rem;opacity:0.75;margin-top:0.4rem;"></p>
 
     <div class="section-title">Records</div>
@@ -92,7 +150,6 @@
     document.getElementById("headerName").textContent = name;
     document.getElementById("welcomeText").textContent = "Welcome, " + name;
 
-    // Org admin only: explicit Dashboard button + drawer links
     if ((localStorage.getItem("reccord_account_type") || "") === "organisation") {
       var b = document.getElementById("orgDashBtn");
       if (b) b.style.display = "block";
