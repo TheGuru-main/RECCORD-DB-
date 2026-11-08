@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lookup — RECCORD DB</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .desc-box {
+      margin-top: 0.35rem; padding: 0.55rem 0.65rem; border-radius: 8px;
+      background: rgba(0,0,0,0.25); font-size: 0.85rem; white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
   <header class="app-header">
@@ -15,69 +21,84 @@
   </header>
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
   <aside class="side-drawer" id="sideDrawer">
-    <div class="drawer-section">Menu</div>
-    <a href="home.html">Workspace</a>
-    <a href="lookup.html" class="active">Lookup</a>
-    <a href="messages.html">Messages</a>
-    <a href="records.html">Records</a>
-    <a href="profile.html">Profile</a>
-    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
-    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
-    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+    <a href="/pages/home.html">Workspace</a>
+    <a href="/pages/lookup.html" class="active">Lookup</a>
+    <a href="/pages/records.html">Records</a>
+    <a href="/pages/profile.html">Profile</a>
+    <a href="/pages/org-dashboard.html" id="dashLink" style="display:none;">Dashboard</a>
+    <a href="#" onclick="logout()" style="color:#fecaca;">Logout</a>
   </aside>
 
-  <div class="page">
-    <label>Search by name</label>
-    <input type="search" id="q" placeholder="Object or commit name..." oninput="runSearch()" />
-    <p style="font-size:0.85rem;color:#94a3b8;">Scoped to your tenant / account. Not a global search.</p>
-    <div id="results"></div>
+  <div class="page with-chrome">
+    <p style="font-size:0.9rem;opacity:0.85;">Search by object name within your tenant (phone-scoped grid data).</p>
+    <input id="q" type="search" placeholder="Type object name…" oninput="filter()" />
+    <div id="list" style="margin-top:1rem;"></div>
+    <p class="err" id="error"></p>
   </div>
 
   <nav class="bottom-nav">
-    <a href="home.html"><i class="fa fa-home"></i>Home</a>
-    <a href="lookup.html" class="active"><i class="fa fa-search"></i>Lookup</a>
-    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
-    <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
-    <a href="profile.html"><i class="fa fa-user"></i>Me</a>
+    <a href="/pages/home.html"><i class="fa fa-home"></i>Home</a>
+    <a href="/pages/lookup.html" class="active"><i class="fa fa-search"></i>Lookup</a>
+    <a href="/pages/messages.html"><i class="fa fa-comments"></i>Messages</a>
+    <a href="/pages/records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="/pages/profile.html"><i class="fa fa-user"></i>Me</a>
   </nav>
 
-  <script src="../js/api.js"></script>
-  <script src="../js/shell.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/shell.js"></script>
   <script>
-    if (!requireAuth()) throw new Error('auth');
-    document.getElementById('headerName').textContent = getDisplayName();
-    if (isAdmin()) {
-      document.getElementById('adminSection').style.display = 'block';
-      document.getElementById('workersLink').style.display = 'block';
+    if (!requireAuth()) throw new Error("auth");
+    document.getElementById("headerName").textContent = getDisplayName();
+    if ((localStorage.getItem("reccord_account_type") || "") === "organisation") {
+      document.getElementById("dashLink").style.display = "block";
     }
 
-    const all = JSON.parse(localStorage.getItem('reccord_recent') || '[]');
-
-    function runSearch() {
-      const q = document.getElementById('q').value.trim().toLowerCase();
-      const el = document.getElementById('results');
-      if (!q) {
-        el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">Type a name to search your scope.</p></div>';
-        return;
-      }
-      const hits = all.filter(r => (r.name || '').toLowerCase().includes(q));
-      if (!hits.length) {
-        el.innerHTML = '<div class="card"><p style="margin:0;color:#94a3b8;font-size:0.9rem;">No matches in your permission scope.</p></div>';
-        return;
-      }
-      el.innerHTML = hits.map(r => `
-        <div class="card">
-          <strong>${escapeHtml(r.name)}</strong>
-          <p style="margin:0.3rem 0 0;font-size:0.8rem;color:#94a3b8;">${new Date(r.at).toLocaleString()}</p>
-        </div>
-      `).join('');
-    }
-
+    let all = [];
     function escapeHtml(s) {
-      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
 
-    runSearch();
+    async function load() {
+      try {
+        const meta = await GridAPI.getMine();
+        all = meta.placements || [];
+        filter();
+      } catch (e) {
+        document.getElementById("error").textContent = e.message;
+      }
+    }
+
+    function filter() {
+      const q = (document.getElementById("q").value || "").trim().toLowerCase();
+      const rows = !q
+        ? all
+        : all.filter(function (p) {
+            return String(p.object_name || "").toLowerCase().indexOf(q) !== -1
+              || String(p.description || "").toLowerCase().indexOf(q) !== -1;
+          });
+      const list = document.getElementById("list");
+      if (!rows.length) {
+        list.innerHTML = '<div class="card"><p style="margin:0;opacity:0.85;">No matches</p></div>';
+        return;
+      }
+      list.innerHTML = rows.map(function (p) {
+        const desc = p.description || "";
+        return (
+          '<div class="card" style="cursor:pointer;" onclick="openRec(\'' +
+          escapeHtml(p.object_id) + '\',\'' + escapeHtml(p.object_name) + '\')">' +
+          "<strong>" + escapeHtml(p.object_name) + "</strong>" +
+          (desc ? '<div class="desc-box">' + escapeHtml(desc) + "</div>" : "") +
+          "</div>"
+        );
+      }).join("");
+    }
+
+    function openRec(id, name) {
+      sessionStorage.setItem("detail_object_id", id);
+      sessionStorage.setItem("detail_placement", JSON.stringify({ object_id: id, object_name: name }));
+      window.location.href = "/pages/commit-detail.html";
+    }
+    load();
   </script>
 </body>
 </html>

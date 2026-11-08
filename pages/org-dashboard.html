@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Org Dashboard — RECCORD DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <button class="menu-btn" onclick="openDrawer()"><i class="fa fa-bars"></i></button>
+    <span class="title">Dashboard</span>
+    <span class="user-label" id="headerName"></span>
+  </header>
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="side-drawer" id="sideDrawer">
+    <a href="/pages/home.html">Workspace</a>
+    <a href="/pages/org-dashboard.html" class="active">Dashboard</a>
+    <a href="/pages/workers.html">Workers</a>
+    <a href="/pages/lookup.html">Lookup</a>
+    <a href="/pages/records.html">Records</a>
+    <a href="/pages/profile.html">Profile</a>
+    <a href="#" onclick="logout()" style="color:#fecaca;">Logout</a>
+  </aside>
+
+  <div class="page with-chrome">
+    <h2 style="font-size:1.15rem;">Organisation dashboard</h2>
+    <p id="orgLine" style="opacity:0.85;font-size:0.9rem;"></p>
+
+    <div class="card">
+      <strong>Worker Credential</strong>
+      <p id="cred" style="margin:0.4rem 0;word-break:break-all;font-size:0.85rem;">—</p>
+      <p style="font-size:0.8rem;opacity:0.75;">Format: OrgName : OrgPhone : WRK-…</p>
+      <button class="btn clay" type="button" onclick="copyCred()">Copy credential</button>
+    </div>
+
+    <div class="stack">
+      <a class="btn primary" href="/pages/workers.html">Workers — pending / approve</a>
+      <a class="btn primary" href="/pages/roles.html">Role types (worker dropdown)</a>
+      <a class="btn ghost" href="/pages/home.html">Org grid &amp; commits</a>
+      <a class="btn ghost" href="/pages/lookup.html">Org lookup</a>
+      <a class="btn ghost" href="/pages/records.html">Org records</a>
+    </div>
+    <p class="err" id="error"></p>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="/pages/home.html"><i class="fa fa-home"></i>Home</a>
+    <a href="/pages/lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="/pages/messages.html"><i class="fa fa-comments"></i>Messages</a>
+    <a href="/pages/records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="/pages/profile.html"><i class="fa fa-user"></i>Me</a>
+  </nav>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/shell.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error("auth");
+    if ((localStorage.getItem("reccord_account_type") || "") !== "organisation") {
+      window.location.href = "/pages/home.html";
+    }
+    document.getElementById("headerName").textContent = getDisplayName();
+    const org = JSON.parse(localStorage.getItem("reccord_organisation") || "null");
+    const cred = localStorage.getItem("reccord_worker_credential") || "";
+    document.getElementById("orgLine").textContent =
+      (org && (org.display_name || org.business_name) || "") +
+      (org && org.phone ? " · " + org.phone : "");
+    document.getElementById("cred").textContent = cred || "(Shown once at signup — save it on Profile if still available)";
+
+    function copyCred() {
+      const t = document.getElementById("cred").textContent;
+      if (t && t.indexOf("(") !== 0) navigator.clipboard.writeText(t).catch(function () {});
+    }
+  </script>
+</body>
+</html>

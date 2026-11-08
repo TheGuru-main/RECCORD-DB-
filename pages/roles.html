@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roles — RECCORD DB</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="page">
+    <a class="back-link" href="/pages/org-dashboard.html">← Dashboard</a>
+    <h2>Worker role types</h2>
+    <p>These appear in the worker signup dropdown.</p>
+    <div id="list"></div>
+    <label>New role name</label>
+    <input id="roleName" placeholder="e.g. Cashier, Nurse, Reception" />
+    <button class="btn primary" id="btn" onclick="addRole()">Add role</button>
+    <p class="err" id="error"></p>
+    <p class="ok" id="ok"></p>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/shell.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error("auth");
+    const org = JSON.parse(localStorage.getItem("reccord_organisation") || "null");
+    const orgId = org && org.id;
+
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    }
+
+    async function load() {
+      if (!orgId) return;
+      try {
+        const data = await api("/roles/" + orgId);
+        const roles = data.roles || data || [];
+        const arr = Array.isArray(roles) ? roles : [];
+        document.getElementById("list").innerHTML = arr.length
+          ? arr.map(function (r) {
+              return '<div class="card"><strong>' + escapeHtml(r.name) + "</strong></div>";
+            }).join("")
+          : '<div class="card"><p style="margin:0;opacity:0.85;">No roles yet</p></div>';
+      } catch (e) {
+        document.getElementById("error").textContent = e.message;
+      }
+    }
+
+    async function addRole() {
+      const name = document.getElementById("roleName").value.trim();
+      const err = document.getElementById("error");
+      const ok = document.getElementById("ok");
+      err.textContent = "";
+      ok.textContent = "";
+      if (!name) { err.textContent = "Role name required"; return; }
+      try {
+        await api("/roles", {
+          method: "POST",
+          body: { organisation_id: orgId, name: name }
+        });
+        document.getElementById("roleName").value = "";
+        ok.textContent = "Role added";
+        load();
+      } catch (e) {
+        err.textContent = e.message;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

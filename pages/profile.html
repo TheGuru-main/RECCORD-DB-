@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profile — RECCORD DB</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <header class="app-header">
@@ -15,57 +15,94 @@
   </header>
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
   <aside class="side-drawer" id="sideDrawer">
-    <div class="drawer-section">Menu</div>
-    <a href="home.html">Workspace</a>
-    <a href="lookup.html">Lookup</a>
-    <a href="messages.html">Messages</a>
-    <a href="records.html">Records</a>
-    <a href="profile.html" class="active">Profile</a>
-    <div class="drawer-section" id="adminSection" style="display:none;">Admin</div>
-    <a href="workers.html" id="workersLink" style="display:none;">Workers</a>
-    <a href="#" onclick="logout()" style="color:#f87171;">Logout</a>
+    <a href="/pages/home.html">Workspace</a>
+    <a href="/pages/lookup.html">Lookup</a>
+    <a href="/pages/records.html">Records</a>
+    <a href="/pages/profile.html" class="active">Profile</a>
+    <a href="/pages/org-dashboard.html" id="dashLink" style="display:none;">Dashboard</a>
+    <a href="/pages/workers.html" id="workersLink" style="display:none;">Workers</a>
+    <a href="#" onclick="logout()" style="color:#fecaca;">Logout</a>
   </aside>
-  <div class="page">
+
+  <div class="page with-chrome">
     <div class="card">
       <strong id="profileName">—</strong>
-      <p id="profileMeta" style="margin-top:0.4rem;font-size:0.9rem;color:#94a3b8;"></p>
+      <div id="fields" style="margin-top:0.75rem;"></div>
     </div>
     <div id="credentialBox" class="card" style="display:none;">
       <strong>Worker Credential</strong>
-      <p id="credentialText" style="margin-top:0.4rem;font-size:0.85rem;word-break:break-all;color:#94a3b8;"></p>
+      <p id="credentialText" style="margin-top:0.4rem;font-size:0.85rem;word-break:break-all;"></p>
+      <button class="btn clay" type="button" onclick="copyCred()">Copy</button>
     </div>
-    <a href="#" class="btn">Premium</a>
-    <button class="btn danger" onclick="logout()">Logout</button>
+    <a class="btn primary" href="/pages/org-dashboard.html" id="dashBtn" style="display:none;">Organisation Dashboard</a>
+    <button class="btn ghost" onclick="logout()">Logout</button>
   </div>
+
   <nav class="bottom-nav">
-    <a href="home.html"><i class="fa fa-home"></i>Home</a>
-    <a href="lookup.html"><i class="fa fa-search"></i>Lookup</a>
-    <a href="messages.html"><i class="fa fa-comments"></i>Messages</a>
-    <a href="records.html"><i class="fa fa-folder-open"></i>Records</a>
-    <a href="profile.html" class="active"><i class="fa fa-user"></i>Me</a>
+    <a href="/pages/home.html"><i class="fa fa-home"></i>Home</a>
+    <a href="/pages/lookup.html"><i class="fa fa-search"></i>Lookup</a>
+    <a href="/pages/messages.html"><i class="fa fa-comments"></i>Messages</a>
+    <a href="/pages/records.html"><i class="fa fa-folder-open"></i>Records</a>
+    <a href="/pages/profile.html" class="active"><i class="fa fa-user"></i>Me</a>
   </nav>
-  <script src="../js/api.js"></script>
-  <script src="../js/shell.js"></script>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/shell.js"></script>
   <script>
-    if (!requireAuth()) throw new Error('auth');
-    document.getElementById('headerName').textContent = getDisplayName();
-    const accountType = localStorage.getItem('reccord_account_type') || '';
-    const user = JSON.parse(localStorage.getItem('reccord_user') || 'null');
-    const org = JSON.parse(localStorage.getItem('reccord_organisation') || 'null');
-    const credential = localStorage.getItem('reccord_worker_credential');
-    if (accountType === 'organisation' && org) {
-      document.getElementById('profileName').textContent = org.display_name || org.business_name;
-      document.getElementById('profileMeta').textContent = (org.phone || '') + ' • Organisation Admin';
+    if (!requireAuth()) throw new Error("auth");
+    document.getElementById("headerName").textContent = getDisplayName();
+
+    const accountType = localStorage.getItem("reccord_account_type") || "";
+    const user = JSON.parse(localStorage.getItem("reccord_user") || "null");
+    const org = JSON.parse(localStorage.getItem("reccord_organisation") || "null");
+    const worker = JSON.parse(localStorage.getItem("reccord_worker") || "null");
+    const credential = localStorage.getItem("reccord_worker_credential");
+
+    function row(label, value) {
+      if (value == null || value === "") return "";
+      return "<p style=\"margin:0 0 0.45rem;\"><span style=\"opacity:0.7;\">" +
+        label + ":</span> " + String(value).replace(/</g,"&lt;") + "</p>";
+    }
+
+    let html = "";
+    if (accountType === "organisation" && org) {
+      document.getElementById("profileName").textContent = org.display_name || org.business_name || "Organisation";
+      html += row("Account", "Organisation Admin");
+      html += row("Business", org.business_name);
+      html += row("Display name", org.display_name);
+      html += row("Phone uID", org.phone);
+      html += row("Country", org.country);
+      html += row("Language", org.language);
+      document.getElementById("dashLink").style.display = "block";
+      document.getElementById("workersLink").style.display = "block";
+      document.getElementById("dashBtn").style.display = "block";
       if (credential) {
-        document.getElementById('credentialBox').style.display = 'block';
-        document.getElementById('credentialText').textContent = credential;
+        document.getElementById("credentialBox").style.display = "block";
+        document.getElementById("credentialText").textContent = credential;
       }
-      document.getElementById('adminSection').style.display = 'block';
-      document.getElementById('workersLink').style.display = 'block';
+    } else if (accountType === "worker" && user) {
+      document.getElementById("profileName").textContent = user.name || user.phone || "Worker";
+      html += row("Account", "Worker");
+      html += row("Full name", user.name);
+      html += row("Phone uID", user.phone);
+      html += row("Role", worker && worker.role ? worker.role : "—");
+      html += row("Status", worker && worker.status ? worker.status : user.status);
+      if (org) {
+        html += row("Organisation", org.display_name || org.business_name);
+        html += row("Org phone", org.phone);
+      }
     } else if (user) {
-      document.getElementById('profileName').textContent = user.name || user.username;
-      document.getElementById('profileMeta').textContent =
-        (user.phone || '') + ' • ' + (accountType === 'worker' ? 'Worker' : 'Regular User');
+      document.getElementById("profileName").textContent = user.name || user.phone || "User";
+      html += row("Account", "Regular");
+      html += row("Full name", user.name);
+      html += row("Phone uID", user.phone);
+      html += row("Status", user.status);
+    }
+    document.getElementById("fields").innerHTML = html || "<p style=\"margin:0;\">No profile data</p>";
+
+    function copyCred() {
+      const t = document.getElementById("credentialText").textContent;
+      if (t) navigator.clipboard.writeText(t).catch(function () {});
     }
   </script>
 </body>
