@@ -53,14 +53,19 @@
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
   <aside class="side-drawer" id="sideDrawer">
     <a href="/pages/home.html" class="active">Workspace</a>
+    <a href="/pages/org-dashboard.html" id="drawerDash" style="display:none;">Dashboard</a>
     <a href="/pages/lookup.html">Lookup</a>
     <a href="/pages/records.html">Records</a>
     <a href="/pages/profile.html">Profile</a>
+    <a href="/pages/workers.html" id="drawerWorkers" style="display:none;">Workers</a>
     <a href="#" onclick="logout()" style="color:#fecaca;">Logout</a>
   </aside>
 
   <div class="page with-chrome">
     <p id="welcomeText">Welcome</p>
+
+    <a class="btn primary" id="orgDashBtn" href="/pages/org-dashboard.html" style="display:none;margin-bottom:1rem;">Dashboard</a>
+
     <div class="section-title" style="margin-top:0.5rem;">54 × 64 placement grid</div>
     <div class="full-grid" id="grid"></div>
     <p id="gridMeta" style="font-size:0.8rem;opacity:0.75;margin-top:0.4rem;"></p>
@@ -86,6 +91,16 @@
     const name = typeof getDisplayName === "function" ? getDisplayName() : "User";
     document.getElementById("headerName").textContent = name;
     document.getElementById("welcomeText").textContent = "Welcome, " + name;
+
+    // Org admin only: explicit Dashboard button + drawer links
+    if ((localStorage.getItem("reccord_account_type") || "") === "organisation") {
+      var b = document.getElementById("orgDashBtn");
+      if (b) b.style.display = "block";
+      var d = document.getElementById("drawerDash");
+      if (d) d.style.display = "block";
+      var w = document.getElementById("drawerWorkers");
+      if (w) w.style.display = "block";
+    }
 
     function escapeHtml(s) {
       return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
