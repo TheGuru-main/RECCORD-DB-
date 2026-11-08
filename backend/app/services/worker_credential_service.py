@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.gsp import GSPPlacement
-from app.services.placement_service import place_organisation_signup
 from app.core.identity import require_phone_uid
 from app.models.organisation import Organisation
 from app.models.role import Role
@@ -189,17 +187,11 @@ def register_worker(
 
     # Org grid scope uses organisation phone uID — never SQL UUID for GSP
         # Worker joins org-fixed domain: org phone uID + worker fullname for L/c
-    placement = place_organisation_signup(
-        phone_uid=organisation.phone,
-        org_display_name=name,
-        language="en",
-    )
 
     return WorkerRegistrationResult(
         user=user,
         worker=worker,
         organisation=organisation,
-        placement=placement,
     )
 
 

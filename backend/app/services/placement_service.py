@@ -1,10 +1,16 @@
-"""Placement service — signup vs object vs vote (not mixed)."""
+"""Placement service — signup Startrow vs object replicas (workers: no signup Startrow)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.core.gsp import GSPPlacement, place_object, place_user_signup, place_vote
+from app.core.gsp import (
+    GSPPlacement,
+    place_object,
+    place_org_signup,
+    place_user_signup,
+    place_vote,
+)
 
 
 def place_regular_user_signup(
@@ -14,7 +20,6 @@ def place_regular_user_signup(
     language: str | None = "en",
 ) -> GSPPlacement:
     return place_user_signup(
-        account_type="regular",
         phone_uid=phone_uid,
         full_name=full_name,
         language=language,
@@ -27,11 +32,9 @@ def place_organisation_signup(
     org_display_name: str,
     language: str | None = "en",
 ) -> GSPPlacement:
-    """Org fixed face from org name + org phone at signup."""
-    return place_user_signup(
-        account_type="organisation",
+    return place_org_signup(
         phone_uid=phone_uid,
-        full_name=org_display_name,
+        org_display_name=org_display_name,
         language=language,
     )
 
@@ -56,7 +59,7 @@ def place_organisation_object(
     object_name: str,
     language: str | None = "en",
 ) -> GSPPlacement:
-    """Worker and org admin both place on org grid (org phone uID)."""
+    """Org admin and workers: always organisation phone uID."""
     return place_object(
         account_type="organisation",
         account_phone_uid=organisation_phone_uid,
@@ -88,9 +91,11 @@ def place_vote_commit(
         voter_phone=voter_phone,
         language=language,
     )
+    # k=1..4 are replica keys (k=0 is primary)
+    replicas = [f"{g.key}:r{k}" for k in range(1, len(g.splits))]
     return VotePlacement(
         primary_key=g.key,
-        replicas=[f"{g.key}:r{k}" for k in range(1, 6)],
+        replicas=replicas,
         voter_name=voter_name.strip(),
         voter_phone=g.account_uid,
         start_row=g.start_row,

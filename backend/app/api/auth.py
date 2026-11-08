@@ -250,7 +250,6 @@ def worker_register(payload: WorkerRegisterRequest, db: Session = Depends(get_db
             "user": safe_user(result.user),
             "worker": safe_worker(result.worker),
             "organisation": safe_organisation(result.organisation),
-            "placement": safe_placement(result.placement),
             "registration_status": "pending",
         }
     except ValueError as exc:

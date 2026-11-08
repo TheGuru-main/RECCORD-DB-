@@ -1,16 +1,16 @@
 """
 RECCORD DB — Guru Separation Protocol (Wizard grid).
 
-Grid: 54 columns × 64 rows (rows numbered 1..64).
+Grid: 54 columns × 64 rows (rows 1..64).
 
-Two different placements — do not mix:
-  1) User signup  → user's fullname + user phone uID
-  2) Object commit → object name + account phone uID
-       regular account_uid = user phone
-       org/worker account_uid = organisation phone (org grid is fixed)
-
-Language / alphabet: only to resolve column modulus (c / alphabet length).
-Never use SQL UUID for Startrow or placement identity.
+Rules:
+  - User signup: Startrow from user fullname + phone uID only (identity on their face).
+  - Org signup: Startrow from org display name + org phone (org face fixed).
+  - Worker: NO Startrow at register (messaging Startrow later only).
+  - Object commit: object name + account phone uID; regular=user phone, org/worker=org phone.
+  - Object uses replicas: k = 0..4 (5 positions), D = 8.
+  - Language only sets alphabet length for column modulus.
+  - Never SQL UUID for placement math.
 """
 
 from __future__ import annotations
@@ -24,18 +24,20 @@ AccountType = Literal["regular", "organisation"]
 
 GRID_COLS = 54
 GRID_ROWS = 64
-RACK_JUMP = 1
-NUM_SPLITS = 6  # k = 0 primary + 5 replicas
+
+# Locked GSP constants
+RACK_JUMP = 8          # D
+NUM_SPLITS = 5         # k = 0,1,2,3,4  (primary + replicas; not 6)
 
 DEFAULT_ALPHABET = "abcdefghijklmnopqrstuvwxyz"
 
 
 @dataclass(frozen=True)
 class GSPPlacement:
-    kind: str  # "user_signup" | "object" | "vote"
+    kind: str  # "user_signup" | "org_signup" | "object" | "vote"
     account_type: AccountType
     account_uid: str
-    label: str  # fullname or object_name used for L/c
+    label: str
     L: int
     S: int
     c: int
@@ -44,7 +46,7 @@ class GSPPlacement:
     start_row: int
     start_col: int
     key: str
-    splits: tuple[tuple[int, int, int], ...]  # (k, row_k, col_k)
+    splits: tuple[tuple[int, int, int], ...]  # (k, row_k, col_k) length NUM_SPLITS
     cell_index: int
 
 
@@ -93,7 +95,7 @@ def first_letter_index(text: str, alphabet: str) -> int:
         ch = fold_char(raw).lower()
         if ch in alpha:
             return alpha.index(ch)
-        if len(ch) >= 1 and ch[0] in alpha:
+        if ch[:1] in alpha:
             return alpha.index(ch[0])
         if "a" <= ch[:1] <= "z":
             return DEFAULT_ALPHABET.index(ch[0]) % len(alpha)
@@ -114,8 +116,9 @@ def split_cell(
     D: int = RACK_JUMP,
 ) -> tuple[int, int]:
     """
-    col_k = (c + k) mod alphabet_len  (then kept in 0 .. GRID_COLS-1)
+    col_k = (c + k) mod alphabet_len  (kept in 0 .. GRID_COLS-1)
     row_k = ((start_row - 1 + k * D) mod 64) + 1
+    D = 8, k in 0..4
     """
     mod = max(1, alphabet_len)
     col_k = (c + k) % mod
@@ -135,7 +138,7 @@ def _place(
     account_uid: str,
     label: str,
     language: str | None,
-    D: int,
+    with_replicas: bool,
 ) -> GSPPlacement:
     phone = require_phone_uid(account_uid, field="account_uid")
     label_norm = normalize_label(label)
@@ -147,10 +150,17 @@ def _place(
     c = first_letter_index(label_norm, alphabet)
     srow = compute_start_row(L, S)
 
+    if with_replicas:
+        # Object / vote: k = 0..4 (5 positions), D = 8
+        k_range = range(NUM_SPLITS)
+    else:
+        # Signup identity: Startrow only (primary cell), no replica scatter
+        k_range = range(1)  # k = 0 only
+
     splits: list[tuple[int, int, int]] = []
-    for k in range(NUM_SPLITS):
+    for k in k_range:
         row_k, col_k = split_cell(
-            start_row_1=srow, c=c, k=k, alphabet_len=alphabet_len, D=D
+            start_row_1=srow, c=c, k=k, alphabet_len=alphabet_len, D=RACK_JUMP
         )
         splits.append((k, row_k, col_k))
 
@@ -177,20 +187,35 @@ def _place(
 
 def place_user_signup(
     *,
-    account_type: AccountType,
     phone_uid: str,
     full_name: str,
     language: str | None = "en",
-    D: int = RACK_JUMP,
 ) -> GSPPlacement:
-    """Signup only: L/c from user's fullname, S from user phone."""
+    """Regular user at signup: Startrow only, recognized by name + uID."""
     return _place(
         kind="user_signup",
-        account_type=account_type,
+        account_type="regular",
         account_uid=phone_uid,
         label=full_name,
         language=language,
-        D=D,
+        with_replicas=False,
+    )
+
+
+def place_org_signup(
+    *,
+    phone_uid: str,
+    org_display_name: str,
+    language: str | None = "en",
+) -> GSPPlacement:
+    """Organisation at signup: fixed org Startrow (name + org phone). No worker Startrow."""
+    return _place(
+        kind="org_signup",
+        account_type="organisation",
+        account_uid=phone_uid,
+        label=org_display_name,
+        language=language,
+        with_replicas=False,
     )
 
 
@@ -200,11 +225,10 @@ def place_object(
     account_phone_uid: str,
     object_name: str,
     language: str | None = "en",
-    D: int = RACK_JUMP,
 ) -> GSPPlacement:
     """
-    Object commit only: L/c from object name, S from account phone uID.
-    Org/worker must pass organisation phone (org grid is fixed).
+    Object commit with replicas (k=0..4, D=8).
+    regular → user phone; organisation/worker → organisation phone.
     """
     return _place(
         kind="object",
@@ -212,7 +236,7 @@ def place_object(
         account_uid=account_phone_uid,
         label=object_name,
         language=language,
-        D=D,
+        with_replicas=True,
     )
 
 
@@ -221,14 +245,13 @@ def place_vote(
     voter_name: str,
     voter_phone: str,
     language: str | None = "en",
-    D: int = RACK_JUMP,
 ) -> GSPPlacement:
-    """Vote: voter name + voter phone uID (same object-style name+uid rule)."""
+    """Vote placement: voter name + phone, with replicas."""
     return _place(
         kind="vote",
         account_type="regular",
         account_uid=voter_phone,
         label=voter_name,
         language=language,
-        D=D,
+        with_replicas=True,
     )
